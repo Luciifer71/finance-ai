@@ -1,0 +1,21 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.mobileprovision
+# Python
+__pycache__/
+.pytest_cache/
+.venv/
+*.pyc
+# Node / Expo
+node_modules/
+.expo/
+dist/
+build/
+# Operating systems / IDE
+.DS_Store
+.vscode/
+.idea/
