@@ -74,3 +74,11 @@ def test_different_external_transactions():
     candidate = make_transaction("100.00", TransactionType.EXPENSE, "UPI456")
 
     assert not is_duplicate(candidate, [existing])
+
+
+def test_refund_gives_spent_money_back():
+    transactions = [
+        make_transaction("1200.00", TransactionType.EXPENSE),
+        make_transaction("1200.00", TransactionType.REFUND),
+    ]
+    assert calculate_net_cashflow(transactions) == Decimal("0.00")
