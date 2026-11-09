@@ -8,6 +8,7 @@ class TransactionType(str, Enum):
     INCOME = "income"
     EXPENSE = "expense"
     TRANSFER = "transfer"
+    REFUND = "refund"
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,8 +45,16 @@ class Transaction:
 
 
 def calculate_net_cashflow(transactions: list[Transaction]) -> Decimal:
+    """Money earned minus money spent. Transfers between own accounts are ignored.
+
+    A refund gives spent money back, so it counts like money coming in.
+    """
     income = sum(
-        (tx.amount for tx in transactions if tx.type == TransactionType.INCOME),
+        (
+            tx.amount
+            for tx in transactions
+            if tx.type in (TransactionType.INCOME, TransactionType.REFUND)
+        ),
         Decimal(0),
     )
     expenses = sum(
