@@ -198,6 +198,7 @@ def cmd_check(_: argparse.Namespace) -> int:
             "openapi drift",
             command([PYTHON, "-m", "app.tools.openapi_export", "--check"]),
         ),
+        ("end-to-end demo", lambda: cmd_demo(argparse.Namespace())),
     ]
     results: list[tuple[str, bool]] = []
     for name, step in steps:
