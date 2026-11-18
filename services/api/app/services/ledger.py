@@ -96,6 +96,14 @@ def update_transaction(
     """PATCH /transactions/{id}. ``fields`` holds only what the client sent."""
     tx = lock_transaction(session, user_id, transaction_id)
     changes: dict[str, Any] = {}
+    create_rule = bool(fields.pop("create_rule", False))
+    if create_rule and fields.get("category_id") is None:
+        raise ProblemError(
+            422,
+            "rule.category_required",
+            "Category required",
+            "A rule needs the category to assign; send category_id with create_rule.",
+        )
 
     new_type = fields.get("transaction_type")
     if new_type is not None and new_type != tx.transaction_type:
@@ -111,6 +119,11 @@ def update_transaction(
         changes["is_excluded"] = fields["is_excluded"]
 
     apply_change(session, tx, changes, event_type=None, actor="user")
+    if create_rule:
+        # Imported here to avoid a circular import (categorization uses apply_change).
+        from app.services.categorization import create_user_rule
+
+        create_user_rule(session, user_id, tx.description, fields["category_id"])
     session.commit()
     return tx
 

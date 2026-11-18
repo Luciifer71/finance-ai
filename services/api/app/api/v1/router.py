@@ -7,8 +7,17 @@ without it: requests without a valid token get 401 before any handler runs.
 from fastapi import APIRouter, Depends
 
 from app.api.deps import get_current_user
-from app.api.v1 import accounts, categories, imports, me, refunds, transactions, transfers
+from app.api.v1 import (
+    accounts,
+    categories,
+    imports,
+    jobs,
+    me,
+    refunds,
+    transactions,
+    transfers,
+)
 
 api_router = APIRouter(dependencies=[Depends(get_current_user)])
-for module in (me, accounts, categories, transactions, imports, transfers, refunds):
+for module in (me, accounts, categories, transactions, imports, transfers, refunds, jobs):
     api_router.include_router(module.router)

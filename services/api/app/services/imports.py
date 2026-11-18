@@ -324,6 +324,7 @@ def commit_import(session: Session, user_id: UUID, import_id: UUID, now: datetim
         payload={"import_id": str(record.id)},
         idempotency_key=categorize_key(record.id),
         user_id=user_id,
+        run_after=now,
     )
     audit.record(
         session,

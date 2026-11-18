@@ -150,3 +150,13 @@ register(
         deletes=[("DELETE", "/api/v1/transfers/{id}")],
     )
 )
+
+
+def _create_job(client: TestClient, user: ApiUser) -> str:
+    import_id = _create_import(client, user)
+    response = client.post(f"/api/v1/imports/{import_id}/commit", headers=user.headers)
+    assert response.status_code == 200, response.text
+    return str(response.json()["categorize_job_id"])
+
+
+register(IsolatedResource(name="jobs", create=_create_job, detail="/api/v1/jobs/{id}"))

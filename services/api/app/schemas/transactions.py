@@ -57,6 +57,10 @@ class TransactionUpdate(ApiModel):
     notes: Annotated[str, StringConstraints(max_length=1000)] | None = None
     is_excluded: bool | None = Field(default=None, description="Hide from reports")
     transaction_type: Literal["income", "expense", "refund"] | None = None
+    create_rule: bool = Field(
+        default=False,
+        description="Also remember merchant -> category for future imports (needs category_id)",
+    )
 
 
 class TransactionPage(ApiModel):

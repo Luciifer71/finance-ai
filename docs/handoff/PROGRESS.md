@@ -7,21 +7,21 @@ MERGE_POLICY: auto-after-green-ci
 <!-- Change to "wait-for-human" if Krishay wants to review each PR before it merges. -->
 
 ## Status
-- Current milestone: M5 (M0-M4 done)
+- Current milestone: M6 (M0-M5 done)
 - Status: IN PROGRESS
-- Branch: `claude/hopeful-euler-ro7kla` (all milestones; see Decisions)
+- Branch: `claude/hopeful-euler-ro7kla` (M0-M4 merged to main in PR #7; M5+ on the same branch)
 - Last updated: 2026-11-18
 
 ## Milestones
 | ID | Name | Status | PR | Learning note |
 |---|---|---|---|---|
 | pre | Ledger schema v2, fingerprints | done | #6 | (explained in chat) |
-| M0 | Foundation and guardrails | done | branch (PR at end) | docs/learning/M0-foundation.md |
-| M1 | Authentication and user isolation | done | branch (PR at end) | docs/learning/M1-authentication.md |
-| M2 | Accounts, categories, balances, transaction reads | done | branch (PR at end) | docs/learning/M2-accounts-balances.md |
-| M3 | CSV import pipeline | done | branch (PR at end) | docs/learning/M3-csv-import.md |
-| M4 | Ledger integrity | done | branch (PR at end) | docs/learning/M4-ledger-integrity.md |
-| M5 | Jobs and categorization | todo | | |
+| M0 | Foundation and guardrails | done | #7 | docs/learning/M0-foundation.md |
+| M1 | Authentication and user isolation | done | #7 | docs/learning/M1-authentication.md |
+| M2 | Accounts, categories, balances, transaction reads | done | #7 | docs/learning/M2-accounts-balances.md |
+| M3 | CSV import pipeline | done | #7 | docs/learning/M3-csv-import.md |
+| M4 | Ledger integrity | done | #7 | docs/learning/M4-ledger-integrity.md |
+| M5 | Jobs and categorization | done | (next PR) | docs/learning/M5-jobs-categorization.md |
 | M6 | Reports and budgets | todo | | |
 | M7 | Week-2 gate: export, restore, isolation, end-to-end | todo | | |
 | M8 | Goals, wishlist, projections, purchase scenario | todo | | |
@@ -36,6 +36,19 @@ MERGE_POLICY: auto-after-green-ci
 
 ## Decisions
 (Date, decision, reason. Include every dependency added and every deviation from the handoff.)
+- 2026-11-18: From M5 on, commits carry a `Co-Authored-By: Claude` trailer (Krishay's request);
+  author stays Krishay. Each milestone is pushed when done.
+- 2026-11-18 M5: A claim counts as an attempt (attempts + 1 when a job starts), so a worker crash
+  also uses an attempt; after an exception the job is `failed` until `run_after`, then the next
+  poll returns it to `queued` (the handoff's "failed -> back to queued").
+- 2026-11-18 M5: Jitter: delay = min(2^attempts, 900 s) x (0.75 + 0.25 x random).
+- 2026-11-18 M5: `jobs.last_error` stores only the exception type name (messages may hold user data).
+- 2026-11-18 M5: `enqueue` takes `run_after` from the injected clock (not the DB's `now()`); found
+  because tests with a frozen clock failed once the real time passed the frozen time.
+- 2026-11-18 M5: Rule precedence: user > seed, then lower priority (user 10, seed 100), then longer
+  pattern. A rule only applies when its category kind fits the type (expense/refund -> expense,
+  income -> income); transfers are never categorized. Rules match whole words of all merchant
+  tokens. `create_rule` uses the 3-token normalized merchant as pattern and upserts.
 - 2026-11-18 M4: Immutable fact columns (trigger): id, user_id, account_id, amount, direction,
   posted_on, occurred_at, description, source, external_id, fingerprint, import_id,
   import_row_number, created_at. DELETE on transactions is not blocked by a trigger (no code path
@@ -143,6 +156,9 @@ MERGE_POLICY: auto-after-green-ci
 
 ## Evidence log
 (Commands run and their results that prove a milestone works, e.g. test counts, timings, backup dry run.)
+- 2026-11-18 M5: `dev.py check` all PASS; 349 tests (~31 s); coverage 97%. Failing handler -> dead
+  after 5 attempts, import still completed, 12 transactions and balance 34125.00 readable; SKIP LOCKED
+  test with 3 real sessions; GitHub CI green for PR #7 before merge.
 - 2026-11-18 M4: `dev.py check` all PASS; 330 tests (~25 s); coverage 97%. DB rejects raw-SQL
   updates to 7 fact columns; refund boundary 600+400=1000 ok, +0.01 rejected; auto-pair only with
   hint and a single candidate.
