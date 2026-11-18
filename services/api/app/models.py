@@ -39,7 +39,12 @@ class Base(DeclarativeBase):
 
 
 class User(Base):
-    """Application identity; authentication will be separate."""
+    """Application identity.
+
+    Sign-in happens at Supabase Auth; ``auth_subject`` is the token's ``sub``
+    claim and is how a token is matched to this row. Email is stored lower-case
+    and is unique ignoring case.
+    """
 
     __tablename__ = "users"
 
@@ -48,11 +53,17 @@ class User(Base):
         primary_key=True,
         default=uuid4,
     )
-    email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False)
+    auth_subject: Mapped[str] = mapped_column(String(255), nullable=False)
+    email: Mapped[str] = mapped_column(String(320), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
+    )
+
+    __table_args__ = (
+        UniqueConstraint("auth_subject", name="uq_users_auth_subject"),
+        Index("uq_users_email_lower", func.lower(email), unique=True),
     )
 
 
@@ -386,4 +397,46 @@ class BalanceSnapshot(Base):
             "source <> 'statement' OR import_id IS NOT NULL",
             name="statement_snapshot_has_import",
         ),
+    )
+
+
+class CategorizationRule(Base):
+    """Maps a merchant word (e.g. SWIGGY) to one of the user's categories.
+
+    ``seed`` rules are created at sign-up; ``user`` rules come from the user
+    re-categorising a transaction and beat seed rules.
+    """
+
+    __tablename__ = "categorization_rules"
+
+    id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False,
+    )
+    pattern: Mapped[str] = mapped_column(String(100), nullable=False)
+    category_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False)
+    priority: Mapped[int] = mapped_column(Integer, nullable=False, default=100)
+    created_from: Mapped[str] = mapped_column(String(10), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    __table_args__ = (
+        UniqueConstraint("id", "user_id"),
+        ForeignKeyConstraint(
+            ["category_id", "user_id"],
+            ["categories.id", "categories.user_id"],
+            name="fk_rule_category_owner",
+        ),
+        UniqueConstraint("user_id", "pattern", name="uq_rules_user_pattern"),
+        CheckConstraint("created_from IN ('seed', 'user')", name="valid_rule_origin"),
+        CheckConstraint("pattern <> '' AND pattern = upper(pattern)", name="pattern_normalized"),
     )

@@ -21,6 +21,7 @@ def create_user_and_account(session, email=None):
     """Create a user first, then their financial account."""
     user = User(
         id=uuid4(),
+        auth_subject=str(uuid4()),
         email=email or f"{uuid4()}@example.test",
     )
 

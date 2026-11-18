@@ -15,10 +15,15 @@ from app.core.config import Settings, get_settings
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import BodySizeLimitMiddleware, RequestContextMiddleware
+from app.core.security import TokenVerifier, build_token_verifier
 from app.database import create_db_engine, create_session_factory
 
 
-def create_app(settings: Settings | None = None, clock: Clock | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    clock: Clock | None = None,
+    token_verifier: TokenVerifier | None = None,
+) -> FastAPI:
     settings = settings or get_settings()
     settings.validate_for_startup()
     configure_logging(settings.log_level)
@@ -32,6 +37,8 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     )
     app.state.settings = settings
     app.state.clock = clock or SystemClock()
+    # Tests inject a verifier holding their own key pair; no network in tests.
+    app.state.token_verifier = token_verifier or build_token_verifier(settings)
     app.state.engine = create_db_engine(settings.database_url) if settings.database_url else None
     app.state.session_factory = (
         create_session_factory(app.state.engine) if app.state.engine is not None else None

@@ -7,7 +7,7 @@ MERGE_POLICY: auto-after-green-ci
 <!-- Change to "wait-for-human" if Krishay wants to review each PR before it merges. -->
 
 ## Status
-- Current milestone: M1 (M0 done)
+- Current milestone: M2 (M0-M1 done)
 - Status: IN PROGRESS
 - Branch: `claude/hopeful-euler-ro7kla` (all milestones; see Decisions)
 - Last updated: 2026-11-18
@@ -17,7 +17,7 @@ MERGE_POLICY: auto-after-green-ci
 |---|---|---|---|---|
 | pre | Ledger schema v2, fingerprints | done | #6 | (explained in chat) |
 | M0 | Foundation and guardrails | done | branch (PR at end) | docs/learning/M0-foundation.md |
-| M1 | Authentication and user isolation | todo | | |
+| M1 | Authentication and user isolation | done | branch (PR at end) | docs/learning/M1-authentication.md |
 | M2 | Accounts, categories, balances, transaction reads | todo | | |
 | M3 | CSV import pipeline | todo | | |
 | M4 | Ledger integrity | todo | | |
@@ -36,6 +36,27 @@ MERGE_POLICY: auto-after-green-ci
 
 ## Decisions
 (Date, decision, reason. Include every dependency added and every deviation from the handoff.)
+- 2026-11-18 M1: Supabase facts checked via search of supabase.com docs (the docs host itself is
+  blocked from the cloud session): JWKS at `<project>/auth/v1/.well-known/jwks.json`, issuer
+  `<project>/auth/v1`, keys ES256 or RS256, and the JWKS may also list a legacy HS256 secret, which we
+  never accept. JWKS cached 10 minutes (`PyJWKClient(lifespan=600)`).
+- 2026-11-18 M1: `exp`, `iat`, `nbf` are checked against the injected `Clock` (30 s leeway), not by
+  PyJWT against the wall clock, so tests with a frozen clock are deterministic. `nbf` is optional
+  (Supabase does not document it as always present); `exp, iat, sub, iss, aud` are required.
+- 2026-11-18 M1: Each key is pinned to one algorithm (JWK `alg`), defeating algorithm confusion.
+  JWKS outage returns 503 `auth.keys_unavailable`, not 401.
+- 2026-11-18 M1: A token without an `email` claim cannot create a user (401
+  `auth.email_required`); an email already used by another `sub` gives 409 `auth.email_in_use`.
+  Email is stored as first seen (lower-case) and not updated from later tokens.
+- 2026-11-18 M1: `categorization_rules` table created in M1 (not M5) because the handoff wants seed
+  rules created at provisioning. Rule patterns match whole words of the normalized merchant ("OLA"
+  must not match "COCA COLA"); stricter than "substring" in section 10.
+- 2026-11-18 M1: Existing `users` rows (dev databases only) get `auth_subject = 'legacy:<id>'` so the
+  column can be NOT NULL without requiring an empty table.
+- 2026-11-18 M1: The 401 route walk reads the OpenAPI spec (as the handoff says), not FastAPI's route
+  objects (FastAPI 0.16x wraps included routers in private classes).
+- 2026-11-18 M1: Dev tokens: same email -> same user id (`uuid5`), 24 h lifetime, issuer
+  `finance-ai-dev`. The private key lives in `.dev-keys/` (ignored by Git), created on first use.
 - 2026-11-18: **Git workflow deviation (Krishay's choice).** The cloud session may only push to
   `claude/hopeful-euler-ro7kla` and must not merge into `main`. All milestones are commits on that
   one branch (commit subjects say which milestone), pushed after each milestone, with ONE pull
@@ -62,6 +83,8 @@ MERGE_POLICY: auto-after-green-ci
 
 ## Evidence log
 (Commands run and their results that prove a milestone works, e.g. test counts, timings, backup dry run.)
+- 2026-11-18 M1: `dev.py check` all PASS; 163 tests; coverage 95%. Concurrency test: 4 threads
+  first-request the same `sub`, exactly 1 user and 21 categories exist afterwards.
 - 2026-11-18 M0: `scripts/dev.py check` all 9 steps PASS on PostgreSQL 17.12 (Docker), Python
   3.12.3, Linux cloud session. 88 tests pass in ~2 s; coverage 92%; mypy --strict clean.
 - 2026-11-18 baseline: before any change, the existing 48 tests passed against PostgreSQL 17.

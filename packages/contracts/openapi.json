@@ -19,6 +19,32 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "MeResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "created_at"
+        ],
+        "title": "MeResponse",
+        "type": "object"
+      },
       "ReadinessResponse": {
         "properties": {
           "database": {
@@ -42,6 +68,12 @@
         "title": "ReadinessResponse",
         "type": "object"
       }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "scheme": "bearer",
+        "type": "http"
+      }
     }
   },
   "info": {
@@ -50,6 +82,32 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/me": {
+      "get": {
+        "operationId": "read_me_api_v1_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Me",
+        "tags": [
+          "me"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "description": "Liveness: the process is up. Never touches the database.",

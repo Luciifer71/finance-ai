@@ -1,5 +1,13 @@
-"""Mounts every /api/v1 module router."""
+"""Mounts every /api/v1 module router.
 
-from fastapi import APIRouter
+Authentication is a router-level dependency, so no /api/v1 route can be added
+without it: requests without a valid token get 401 before any handler runs.
+"""
 
-api_router = APIRouter()
+from fastapi import APIRouter, Depends
+
+from app.api.deps import get_current_user
+from app.api.v1 import me
+
+api_router = APIRouter(dependencies=[Depends(get_current_user)])
+api_router.include_router(me.router)
