@@ -418,6 +418,93 @@
         "title": "BudgetCreate",
         "type": "object"
       },
+      "BudgetImpactOut": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "budget_id": {
+            "format": "uuid",
+            "title": "Budget Id",
+            "type": "string"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "category_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Name"
+          },
+          "spent_after": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Spent After",
+            "type": "string"
+          },
+          "spent_before": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Spent Before",
+            "type": "string"
+          },
+          "status_after": {
+            "enum": [
+              "ok",
+              "warning",
+              "over"
+            ],
+            "title": "Status After",
+            "type": "string"
+          },
+          "status_before": {
+            "enum": [
+              "ok",
+              "warning",
+              "over"
+            ],
+            "title": "Status Before",
+            "type": "string"
+          }
+        },
+        "required": [
+          "budget_id",
+          "category_id",
+          "category_name",
+          "spent_before",
+          "spent_after",
+          "amount",
+          "status_before",
+          "status_after"
+        ],
+        "title": "BudgetImpactOut",
+        "type": "object"
+      },
       "BudgetList": {
         "additionalProperties": false,
         "properties": {
@@ -940,6 +1027,763 @@
           }
         },
         "title": "CategoryUpdate",
+        "type": "object"
+      },
+      "GoalCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "item_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 2000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "http or https only",
+            "title": "Item Url"
+          },
+          "kind": {
+            "enum": [
+              "wishlist",
+              "savings"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "priority": {
+            "default": 3,
+            "description": "1 = most important",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Priority",
+            "type": "integer"
+          },
+          "target_amount": {
+            "examples": [
+              "1250.50",
+              "1,23,456.70",
+              "₹ 1,200"
+            ],
+            "title": "Target Amount",
+            "type": "string"
+          },
+          "target_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Date"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "target_amount"
+        ],
+        "title": "GoalCreate",
+        "type": "object"
+      },
+      "GoalDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/GoalEventOut"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "item_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Url"
+          },
+          "kind": {
+            "enum": [
+              "wishlist",
+              "savings"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "priority": {
+            "title": "Priority",
+            "type": "integer"
+          },
+          "remaining": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Remaining",
+            "type": "string"
+          },
+          "saved": {
+            "description": "contributions - withdrawals (earmarked, not moved)",
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Saved",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "achieved",
+              "abandoned"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "target_amount": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Target Amount",
+            "type": "string"
+          },
+          "target_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Date"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "target_amount",
+          "target_date",
+          "item_url",
+          "priority",
+          "status",
+          "saved",
+          "remaining",
+          "created_at",
+          "updated_at",
+          "events"
+        ],
+        "title": "GoalDetail",
+        "type": "object"
+      },
+      "GoalEventIn": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1250.50",
+                  "1,23,456.70",
+                  "₹ 1,200"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "event_type": {
+            "enum": [
+              "contribution",
+              "withdrawal",
+              "note"
+            ],
+            "title": "Event Type",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "event_type"
+        ],
+        "title": "GoalEventIn",
+        "type": "object"
+      },
+      "GoalEventOut": {
+        "additionalProperties": false,
+        "properties": {
+          "actor": {
+            "enum": [
+              "user",
+              "system"
+            ],
+            "title": "Actor",
+            "type": "string"
+          },
+          "after": {
+            "additionalProperties": true,
+            "title": "After",
+            "type": "object"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1250.50"
+                ],
+                "pattern": "^-?\\d+\\.\\d{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "before": {
+            "additionalProperties": true,
+            "title": "Before",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "id",
+          "event_type",
+          "amount",
+          "before",
+          "after",
+          "note",
+          "actor",
+          "created_at"
+        ],
+        "title": "GoalEventOut",
+        "type": "object"
+      },
+      "GoalImpactOut": {
+        "additionalProperties": false,
+        "properties": {
+          "delay_months": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delay Months"
+          },
+          "goal_id": {
+            "format": "uuid",
+            "title": "Goal Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "const": "insufficient_history",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "remaining": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Remaining",
+            "type": "string"
+          }
+        },
+        "required": [
+          "goal_id",
+          "name",
+          "remaining",
+          "delay_months",
+          "reason"
+        ],
+        "title": "GoalImpactOut",
+        "type": "object"
+      },
+      "GoalList": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/GoalOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "GoalList",
+        "type": "object"
+      },
+      "GoalOut": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "item_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Url"
+          },
+          "kind": {
+            "enum": [
+              "wishlist",
+              "savings"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "priority": {
+            "title": "Priority",
+            "type": "integer"
+          },
+          "remaining": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Remaining",
+            "type": "string"
+          },
+          "saved": {
+            "description": "contributions - withdrawals (earmarked, not moved)",
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Saved",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "achieved",
+              "abandoned"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "target_amount": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Target Amount",
+            "type": "string"
+          },
+          "target_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Date"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "target_amount",
+          "target_date",
+          "item_url",
+          "priority",
+          "status",
+          "saved",
+          "remaining",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "GoalOut",
+        "type": "object"
+      },
+      "GoalProjectionOut": {
+        "additionalProperties": false,
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "monthly_saving": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1250.50"
+                ],
+                "pattern": "^-?\\d+\\.\\d{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Saving"
+          },
+          "monthly_saving_source": {
+            "anyOf": [
+              {
+                "enum": [
+                  "given",
+                  "median_of_recent_months"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Saving Source"
+          },
+          "months_needed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Months Needed"
+          },
+          "months_until_target": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Months Until Target"
+          },
+          "on_track": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "On Track"
+          },
+          "projected_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projected Date"
+          },
+          "remaining": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Remaining",
+            "type": "string"
+          },
+          "required_monthly": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1250.50"
+                ],
+                "pattern": "^-?\\d+\\.\\d{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Monthly"
+          },
+          "saved": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Saved",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "insufficient_history"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "target_amount": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Target Amount",
+            "type": "string"
+          },
+          "target_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Date"
+          },
+          "target_date_passed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Date Passed"
+          }
+        },
+        "required": [
+          "status",
+          "monthly_saving",
+          "monthly_saving_source",
+          "saved",
+          "target_amount",
+          "remaining",
+          "months_needed",
+          "projected_date",
+          "target_date",
+          "months_until_target",
+          "required_monthly",
+          "on_track",
+          "target_date_passed",
+          "assumptions"
+        ],
+        "title": "GoalProjectionOut",
+        "type": "object"
+      },
+      "GoalUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "item_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 2000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Url"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "description": "1 = most important",
+                "maximum": 5.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "active",
+                  "achieved",
+                  "abandoned"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "target_amount": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1250.50",
+                  "1,23,456.70",
+                  "₹ 1,200"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Amount"
+          },
+          "target_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Date"
+          }
+        },
+        "title": "GoalUpdate",
         "type": "object"
       },
       "HealthResponse": {
@@ -1881,6 +2725,173 @@
           "days_in_month"
         ],
         "title": "ProjectionOut",
+        "type": "object"
+      },
+      "PurchaseIn": {
+        "additionalProperties": false,
+        "properties": {
+          "account_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "amount": {
+            "examples": [
+              "1250.50",
+              "1,23,456.70",
+              "₹ 1,200"
+            ],
+            "title": "Amount",
+            "type": "string"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "To check that category's budget",
+            "title": "Category Id"
+          }
+        },
+        "required": [
+          "amount"
+        ],
+        "title": "PurchaseIn",
+        "type": "object"
+      },
+      "PurchaseOut": {
+        "additionalProperties": false,
+        "properties": {
+          "account_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "amount": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "balance_after": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1250.50"
+                ],
+                "pattern": "^-?\\d+\\.\\d{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance After"
+          },
+          "balance_before": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BalanceOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "budgets": {
+            "items": {
+              "$ref": "#/components/schemas/BudgetImpactOut"
+            },
+            "title": "Budgets",
+            "type": "array"
+          },
+          "goals": {
+            "items": {
+              "$ref": "#/components/schemas/GoalImpactOut"
+            },
+            "title": "Goals",
+            "type": "array"
+          },
+          "month_net_spending_after": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Month Net Spending After",
+            "type": "string"
+          },
+          "month_net_spending_before": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Month Net Spending Before",
+            "type": "string"
+          },
+          "monthly_saving": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1250.50"
+                ],
+                "pattern": "^-?\\d+\\.\\d{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Saving"
+          },
+          "written": {
+            "const": false,
+            "default": false,
+            "description": "Nothing is ever saved",
+            "title": "Written",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "amount",
+          "account_id",
+          "balance_before",
+          "balance_after",
+          "month_net_spending_before",
+          "month_net_spending_after",
+          "budgets",
+          "goals",
+          "monthly_saving",
+          "assumptions"
+        ],
+        "title": "PurchaseOut",
         "type": "object"
       },
       "ReadinessResponse": {
@@ -3946,6 +4957,399 @@
         ]
       }
     },
+    "/api/v1/goals": {
+      "get": {
+        "operationId": "list_goals_api_v1_goals_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "active",
+                    "achieved",
+                    "abandoned"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Missing or invalid access token"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Goals",
+        "tags": [
+          "goals"
+        ]
+      },
+      "post": {
+        "operationId": "create_goal_api_v1_goals_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Missing or invalid access token"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Goal",
+        "tags": [
+          "goals"
+        ]
+      }
+    },
+    "/api/v1/goals/{goal_id}": {
+      "get": {
+        "operationId": "read_goal_api_v1_goals__goal_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "goal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Goal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Missing or invalid access token"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Goal",
+        "tags": [
+          "goals"
+        ]
+      },
+      "patch": {
+        "description": "Every change is recorded in the goal's history. Send `target_date: null` to remove it.",
+        "operationId": "update_goal_api_v1_goals__goal_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "goal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Goal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Missing or invalid access token"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Goal",
+        "tags": [
+          "goals"
+        ]
+      }
+    },
+    "/api/v1/goals/{goal_id}/events": {
+      "post": {
+        "description": "Contribution, withdrawal or note. Contributions are earmarks: no money moves.",
+        "operationId": "add_event_api_v1_goals__goal_id__events_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "goal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Goal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalEventIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalEventOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Missing or invalid access token"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Add Event",
+        "tags": [
+          "goals"
+        ]
+      }
+    },
+    "/api/v1/goals/{goal_id}/projection": {
+      "get": {
+        "operationId": "projection_api_v1_goals__goal_id__projection_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "goal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Goal Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Defaults to the median of recent complete months",
+            "in": "query",
+            "name": "monthly_saving",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Defaults to the median of recent complete months",
+              "title": "Monthly Saving"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalProjectionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Missing or invalid access token"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Projection",
+        "tags": [
+          "goals"
+        ]
+      }
+    },
     "/api/v1/import-profiles": {
       "get": {
         "operationId": "list_profiles_api_v1_import_profiles_get",
@@ -4711,6 +6115,62 @@
         "summary": "Timeseries",
         "tags": [
           "reports"
+        ]
+      }
+    },
+    "/api/v1/scenarios/purchase": {
+      "post": {
+        "operationId": "purchase_api_v1_scenarios_purchase_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PurchaseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Missing or invalid access token"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Purchase",
+        "tags": [
+          "scenarios"
         ]
       }
     },

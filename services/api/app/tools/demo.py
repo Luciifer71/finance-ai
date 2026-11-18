@@ -246,6 +246,48 @@ def run_demo(demo: Demo) -> list[tuple[str, bool, str]]:
         ("2706.50", "ok"),
     )
 
+    # Journey 8: a wishlist goal, its projection, and "what if I buy this now?"
+    status, goal = d.call(
+        "POST",
+        "/api/v1/goals",
+        json={
+            "name": "New phone",
+            "kind": "wishlist",
+            "target_amount": "45000.00",
+            "target_date": "2027-05-18",
+        },
+    )
+    d.call(
+        "POST",
+        f"/api/v1/goals/{goal['id']}/events",
+        json={"event_type": "contribution", "amount": "15000.00"},
+    )
+    status, projection = d.call("GET", f"/api/v1/goals/{goal['id']}/projection?monthly_saving=5000")
+    # remaining 45000 - 15000 = 30000; 30000 / 5000 = 6 months
+    _expect(
+        d,
+        "8  goal: 30000.00 left, 6 months at 5000/month",
+        (projection["remaining"], projection["months_needed"]),
+        ("30000.00", 6),
+    )
+    status, scenario = d.call(
+        "POST", "/api/v1/scenarios/purchase", json={"amount": "7000.00", "account_id": bank_id}
+    )
+    # 91418.50 - 7000.00 = 84418.50; nothing is written
+    _expect(
+        d,
+        "8  purchase scenario: balance after 84418.50",
+        (scenario["balance_after"], scenario["written"]),
+        ("84418.50", False),
+    )
+    status, goal_after = d.call("GET", f"/api/v1/goals/{goal['id']}")
+    _expect(
+        d,
+        "8  scenario wrote nothing (goal unchanged)",
+        (goal_after["saved"], len(goal_after["events"])),
+        ("15000.00", 2),
+    )
+
     # Privacy: user B sees none of A's data
     status, b_accounts = d.call("GET", "/api/v1/accounts", user="b")
     _expect(d, "1  user B sees no accounts", b_accounts["items"], [])
@@ -253,6 +295,8 @@ def run_demo(demo: Demo) -> list[tuple[str, bool, str]]:
     _expect(d, "1  user B reading A's account -> 404", status, 404)
     status, b_tx = d.call("GET", "/api/v1/transactions", user="b")
     _expect(d, "1  user B sees no transactions", b_tx["items"], [])
+    status, b_goals = d.call("GET", "/api/v1/goals", user="b")
+    _expect(d, "1  user B sees no goals", b_goals["items"], [])
     return d.results
 
 

@@ -7,7 +7,7 @@ MERGE_POLICY: auto-after-green-ci
 <!-- Change to "wait-for-human" if Krishay wants to review each PR before it merges. -->
 
 ## Status
-- Current milestone: M8 (M0-M7 done)
+- Current milestone: M9 (M0-M8 done)
 - Status: IN PROGRESS
 - Branch: `claude/hopeful-euler-ro7kla` (M0-M4 merged to main in PR #7; M5+ on the same branch)
 - Last updated: 2026-11-18
@@ -24,7 +24,7 @@ MERGE_POLICY: auto-after-green-ci
 | M5 | Jobs and categorization | done | (next PR) | docs/learning/M5-jobs-categorization.md |
 | M6 | Reports and budgets | done | (next PR) | docs/learning/M6-reports-budgets.md |
 | M7 | Week-2 gate: export, restore, isolation, end-to-end | done | (next PR) | docs/learning/M7-export-restore-seed.md |
-| M8 | Goals, wishlist, projections, purchase scenario | todo | | |
+| M8 | Goals, wishlist, projections, purchase scenario | done | (next PR) | docs/learning/M8-goals-scenarios.md |
 | M9 | Forecast and insights | todo | | |
 | M10 | Assistant | todo | | |
 | M11 | Security, reliability, performance | todo | | |
@@ -38,6 +38,18 @@ MERGE_POLICY: auto-after-green-ci
 (Date, decision, reason. Include every dependency added and every deviation from the handoff.)
 - 2026-11-18: From M5 on, commits carry a `Co-Authored-By: Claude` trailer (Krishay's request);
   author stays Krishay. Each milestone is pushed when done.
+- 2026-11-18 M8: Extra goal event type `details_changed` (name, priority, link) so that every
+  change is in the history; the handoff's list covers only target, date, status and notes.
+- 2026-11-18 M8: Contributions/withdrawals are refused on abandoned goals (409); allowed on achieved
+  ones. Lowering the target to at or below the saved amount also auto-achieves (actor system).
+- 2026-11-18 M8: "Complete month" for the default saving rate: a calendar month before the current
+  one, starting on or after the user's first transaction date (a first month that starts mid-month
+  is skipped, so it cannot understate saving).
+- 2026-11-18 M8: `whole_months_between` counts completed months (18 Nov -> 17 May = 5); a past target
+  date gives `months_until_target = 1` plus `target_date_passed: true`.
+- 2026-11-18 M8: Purchase scenario takes an optional `category_id` so the right category budget is
+  checked; the all-spending budget is always checked. Balance after = base balance - amount, and
+  it keeps the base balance's verified/estimated status. Response says `written: false`.
 - 2026-11-18 M7: Export adds `transaction_events.json` (audit history is the user's data too) and
   puts balance snapshots inside `accounts.json`. Not exported: jobs, import staging rows,
   categorization rules, access_audit (operational). The manifest has no timestamp, and the zip uses
@@ -188,6 +200,8 @@ MERGE_POLICY: auto-after-green-ci
 
 ## Evidence log
 (Commands run and their results that prove a milestone works, e.g. test counts, timings, backup dry run.)
+- 2026-11-18 M8: `dev.py check` all 10 steps PASS; demo 30/30 (adds journey 8); 423 tests (~50 s);
+  coverage 96%. Purchase scenario row counts identical in 7 tables before and after.
 - 2026-11-18 M7: `dev.py check` all 10 steps PASS (incl. demo 26/26); 388 tests (~42 s); coverage
   96%. Export -> restore -> export manifests identical (17 transactions, events, refund, transfer,
   budgets). Seed run twice on the dev DB: 105/101 added, then 0/0. Operator backup dry run: backup

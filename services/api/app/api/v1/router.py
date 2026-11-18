@@ -12,11 +12,13 @@ from app.api.v1 import (
     budgets,
     categories,
     exports,
+    goals,
     imports,
     jobs,
     me,
     refunds,
     reports,
+    scenarios,
     transactions,
     transfers,
 )
@@ -34,5 +36,7 @@ for module in (
     reports,
     budgets,
     exports,
+    goals,
+    scenarios,
 ):
     api_router.include_router(module.router)

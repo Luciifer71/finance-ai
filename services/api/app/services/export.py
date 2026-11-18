@@ -30,6 +30,8 @@ from app.models import (
     Budget,
     Category,
     FinancialAccount,
+    Goal,
+    GoalEvent,
     Transaction,
     TransactionEvent,
     TransactionImport,
@@ -240,8 +242,37 @@ def build_export(session: Session, user_id: UUID) -> dict[str, bytes]:
 
 
 def _goals(session: Session, user_id: UUID) -> list[dict[str, Any]]:
-    """Goals arrive in M8; until then the file is an empty list."""
-    return []
+    """Each goal with its full, ordered event history (the saved amount derives from it)."""
+    goals = list(
+        session.scalars(
+            select(Goal).where(Goal.user_id == user_id).order_by(Goal.created_at, Goal.id)
+        )
+    )
+    events = list(
+        session.scalars(
+            select(GoalEvent).where(GoalEvent.user_id == user_id).order_by(GoalEvent.seq)
+        )
+    )
+    goal_columns = (
+        "id",
+        "name",
+        "kind",
+        "target_amount",
+        "target_date",
+        "item_url",
+        "priority",
+        "status",
+        "created_at",
+        "updated_at",
+    )
+    event_columns = ("id", "event_type", "amount", "before", "after", "note", "actor", "created_at")
+    return [
+        {
+            **_row(g, goal_columns),
+            "events": [_row(e, event_columns) for e in events if e.goal_id == g.id],
+        }
+        for g in goals
+    ]
 
 
 def to_zip(files: dict[str, bytes]) -> bytes:

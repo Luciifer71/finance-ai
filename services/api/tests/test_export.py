@@ -201,4 +201,6 @@ def test_export_restore_export_gives_identical_manifests(
             engine.dispose()
 
     assert again["manifest.json"] == original["manifest.json"]
-    assert json.loads(original["manifest.json"])["files"]["transactions.csv"]["rows"] == 17
+    manifest = json.loads(original["manifest.json"])["files"]
+    assert manifest["transactions.csv"]["rows"] == 17
+    assert manifest["goals.json"]["rows"] == 1  # the demo's goal, with its events

@@ -251,11 +251,58 @@ def seed_user(session: Session, email: str, salary: Decimal, today: date) -> dic
             .on_conflict_do_nothing(constraint="uq_budgets_user_category_month")
         )
     session.commit()
+    _seed_goals(session, user.id, today)
     total = session.scalar(
         select(func.count()).select_from(Transaction).where(Transaction.user_id == user.id)
     )
     # "added" counts statement-like rows; confirming an ATM withdrawal also adds its cash side.
     return {"transactions_added": len(inserted), "transactions_total": int(total or 0)}
+
+
+def _seed_goals(session: Session, user_id: UUID, today: date) -> None:
+    """Two goals with some contributions; skipped if the user already has them."""
+    from app.models import Goal
+    from app.services import goals as goal_service
+
+    existing = set(session.scalars(select(Goal.name).where(Goal.user_id == user_id)))
+    now = SystemClock().now()
+    plans = [
+        (
+            "New phone",
+            "wishlist",
+            Decimal("45000.00"),
+            today.replace(day=1) + timedelta(days=150),
+            "https://example.com/phone",
+            [Decimal("10000.00"), Decimal("5000.00")],
+        ),
+        ("Emergency fund", "savings", Decimal("100000.00"), None, None, [Decimal("20000.00")]),
+    ]
+    for name, kind, target, target_date, url, contributions in plans:
+        if name in existing:
+            continue
+        goal = goal_service.create_goal(
+            session,
+            user_id,
+            {
+                "name": name,
+                "kind": kind,
+                "target_amount": target,
+                "target_date": target_date,
+                "item_url": url,
+                "priority": 2 if kind == "wishlist" else 1,
+            },
+            now,
+        )
+        for amount in contributions:
+            goal_service.add_event(
+                session,
+                user_id,
+                goal.id,
+                event_type="contribution",
+                amount=amount,
+                note=None,
+                now=now,
+            )
 
 
 def seed(session: Session, today: date) -> dict[str, dict[str, int]]:

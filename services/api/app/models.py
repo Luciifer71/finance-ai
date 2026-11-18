@@ -682,3 +682,84 @@ class Budget(Base):
         CheckConstraint("warn_at_percent BETWEEN 1 AND 100", name="valid_warn_percent"),
         CheckConstraint("EXTRACT(DAY FROM month) = 1", name="month_is_first_day"),
     )
+
+
+class Goal(Base):
+    """Something to save for: a wishlist item (with a price) or a savings target.
+
+    The amount saved is not stored: it is the sum of the goal's contribution
+    events minus its withdrawals, so it can never disagree with the history.
+    """
+
+    __tablename__ = "goals"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    kind: Mapped[str] = mapped_column(String(10), nullable=False)
+    target_amount: Mapped[Decimal] = mapped_column(Money, nullable=False)
+    target_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    item_url: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    priority: Mapped[int] = mapped_column(Integer, nullable=False, default=3, server_default="3")
+    status: Mapped[str] = mapped_column(
+        String(10), nullable=False, default="active", server_default="active"
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("id", "user_id"),
+        CheckConstraint("kind IN ('wishlist', 'savings')", name="valid_kind"),
+        CheckConstraint("target_amount > 0", name="positive_target"),
+        CheckConstraint("priority BETWEEN 1 AND 5", name="valid_priority"),
+        CheckConstraint("status IN ('active', 'achieved', 'abandoned')", name="valid_status"),
+        CheckConstraint("item_url IS NULL OR item_url ~* '^https?://'", name="item_url_is_http"),
+        Index("ix_goals_user", "user_id"),
+    )
+
+
+class GoalEvent(Base):
+    """Append-only history of a goal: every change, contribution and withdrawal."""
+
+    __tablename__ = "goal_events"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    seq: Mapped[int] = mapped_column(BigInteger, Identity(always=True), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    goal_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False)
+    event_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    amount: Mapped[Decimal | None] = mapped_column(Money, nullable=True)
+    before: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    after: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    note: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    actor: Mapped[str] = mapped_column(String(10), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["goal_id", "user_id"], ["goals.id", "goals.user_id"], name="fk_goal_event_owner"
+        ),
+        UniqueConstraint("seq", name="uq_goal_events_seq"),
+        CheckConstraint(
+            "event_type IN ('created', 'target_changed', 'date_changed', 'details_changed', "
+            "'contribution', 'withdrawal', 'status_changed', 'note')",
+            name="valid_event_type",
+        ),
+        CheckConstraint(
+            "(event_type IN ('contribution', 'withdrawal')) = (amount IS NOT NULL)",
+            name="amount_only_on_money_events",
+        ),
+        CheckConstraint("amount IS NULL OR amount > 0", name="positive_amount"),
+        CheckConstraint("actor IN ('user', 'system')", name="valid_actor"),
+        Index("ix_goal_events_goal_seq", "goal_id", "seq"),
+    )

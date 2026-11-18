@@ -180,3 +180,28 @@ register(
         lists=["/api/v1/budgets", "/api/v1/budgets/status?month=2026-11"],
     )
 )
+
+
+def _create_goal(client: TestClient, user: ApiUser) -> str:
+    response = client.post(
+        "/api/v1/goals",
+        json={"name": "Private goal", "kind": "savings", "target_amount": "999.00"},
+        headers=user.headers,
+    )
+    assert response.status_code == 201, response.text
+    return str(response.json()["id"])
+
+
+register(
+    IsolatedResource(
+        name="goals",
+        create=_create_goal,
+        detail="/api/v1/goals/{id}",
+        updates=[
+            ("PATCH", "/api/v1/goals/{id}", {"name": "stolen", "status": "abandoned"}),
+            ("POST", "/api/v1/goals/{id}/events", {"event_type": "contribution", "amount": "1"}),
+            ("GET", "/api/v1/goals/{id}/projection?monthly_saving=100", {}),
+        ],
+        lists=["/api/v1/goals"],
+    )
+)

@@ -39,5 +39,5 @@ def test_every_demo_step_passes(
 
     failed = [(step, detail) for step, ok, detail in results if not ok]
     assert failed == []
-    assert len(results) == 26
-    assert "26/26 checks passed" in capsys.readouterr().out
+    assert len(results) == 30
+    assert "30/30 checks passed" in capsys.readouterr().out

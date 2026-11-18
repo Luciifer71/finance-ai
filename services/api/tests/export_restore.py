@@ -20,6 +20,8 @@ from app.models import (
     Budget,
     Category,
     FinancialAccount,
+    Goal,
+    GoalEvent,
     Transaction,
     TransactionEvent,
     TransactionImport,
@@ -206,6 +208,45 @@ def restore(session: Session, files: dict[str, bytes], email: str) -> uuid.UUID:
                 "updated_at": _ts(b["updated_at"]),
             }
             for b in load("budgets.json")
+        ],
+    )
+    goals = load("goals.json")
+    rows(
+        Goal,
+        [
+            {
+                "id": _uuid(g["id"]),
+                "user_id": uid,
+                "name": g["name"],
+                "kind": g["kind"],
+                "target_amount": _money(g["target_amount"]),
+                "target_date": _date(g["target_date"]),
+                "item_url": g["item_url"],
+                "priority": g["priority"],
+                "status": g["status"],
+                "created_at": _ts(g["created_at"]),
+                "updated_at": _ts(g["updated_at"]),
+            }
+            for g in goals
+        ],
+    )
+    rows(
+        GoalEvent,
+        [
+            {
+                "id": _uuid(e["id"]),
+                "user_id": uid,
+                "goal_id": _uuid(g["id"]),
+                "event_type": e["event_type"],
+                "amount": _money(e["amount"]),
+                "before": e["before"],
+                "after": e["after"],
+                "note": e["note"],
+                "actor": e["actor"],
+                "created_at": _ts(e["created_at"]),
+            }
+            for g in goals
+            for e in g["events"]
         ],
     )
     session.commit()
