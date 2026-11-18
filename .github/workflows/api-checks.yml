@@ -4,10 +4,16 @@ on:
   push:
     paths:
       - "services/api/**"
+      - "packages/contracts/**"
+      - "scripts/**"
+      - "ruff.toml"
       - ".github/workflows/api-checks.yml"
   pull_request:
     paths:
       - "services/api/**"
+      - "packages/contracts/**"
+      - "scripts/**"
+      - "ruff.toml"
       - ".github/workflows/api-checks.yml"
 
 jobs:
@@ -57,9 +63,12 @@ jobs:
           DATABASE_URL: postgresql+psycopg://finance:finance@127.0.0.1:5432/finance_test
         run: python -m alembic check
 
-      - name: Run backend tests
+      - name: Migration round trip on a scratch database
+        run: python scripts/dev.py migration-roundtrip
+
+      - name: Run backend tests with coverage
         working-directory: services/api
-        run: python -m pytest tests -v --tb=short
+        run: python -m pytest tests -v --tb=short --cov --cov-report=term --cov-fail-under=85
 
       - name: Check Python lint
         working-directory: services/api
@@ -68,3 +77,16 @@ jobs:
       - name: Check Python formatting
         working-directory: services/api
         run: python -m ruff format --check app tests migrations
+
+      - name: Check developer scripts
+        run: |
+          python -m ruff check scripts
+          python -m ruff format --check scripts
+
+      - name: Check types (mypy strict)
+        working-directory: services/api
+        run: python -m mypy
+
+      - name: Check OpenAPI contract is current
+        working-directory: services/api
+        run: python -m app.tools.openapi_export --check

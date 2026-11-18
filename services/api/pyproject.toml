@@ -1,18 +1,77 @@
 [build-system]
 requires = ["setuptools>=70"]
 build-backend = "setuptools.build_meta"
+
 [project]
 name = "finance-ai-api"
 version = "0.1.0"
 description = "Private finance companion API"
 requires-python = ">=3.12"
-dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "pydantic>=2.8,<3","SQLAlchemy>=2.0,<2.1",
-"psycopg[binary]>=3.2,<4","alembic>=1.15,<2",]
+dependencies = [
+    "fastapi>=0.115,<1",
+    "uvicorn>=0.30,<1",
+    "pydantic>=2.8,<3",
+    "pydantic-settings>=2.6,<3",
+    "SQLAlchemy>=2.0,<2.1",
+    "psycopg[binary]>=3.2,<4",
+    "alembic>=1.15,<2",
+    "PyJWT[crypto]>=2.10,<3",
+    "python-multipart>=0.0.20,<1",
+    # Windows has no system time zone database; zoneinfo needs this for Asia/Kolkata.
+    "tzdata>=2024.1",
+]
+
 [project.optional-dependencies]
-dev = ["pytest>=8,<10", "httpx>=0.27,<1", "ruff>=0.8,<1"]
+dev = [
+    "pytest>=8,<10",
+    "pytest-cov>=6,<8",
+    "hypothesis>=6.100,<7",
+    "httpx>=0.27,<1",
+    "ruff>=0.8,<1",
+    "mypy>=1.13,<3",
+]
+
 [tool.setuptools.packages.find]
 include = ["app*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["slow: slower tests (still run in CI)"]
+filterwarnings = [
+    # Starlette's TestClient warns that it will move to httpx2; not our code.
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "\\.\\.\\.$",
+    "if __name__ == .__main__.:",
+]
+
+[tool.mypy]
+strict = true
+files = ["app"]
+plugins = ["pydantic.mypy"]
+
 [tool.ruff]
 line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF", "DTZ"]
+ignore = [
+    "RUF001", "RUF002", "RUF003",  # the rupee sign and other Unicode in strings/docs are intended
+    "UP042",  # keep `str, Enum` in existing domain code; StrEnum changes str() output
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106", "S108", "S311"]
+"migrations/**" = ["S608", "E501"]  # merged revisions are never edited
