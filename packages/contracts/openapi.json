@@ -3913,6 +3913,39 @@
         ]
       }
     },
+    "/api/v1/export": {
+      "get": {
+        "description": "A zip with transactions.csv, accounts.json, categories.json, budgets.json, goals.json,\nimports.json, transaction_events.json and manifest.json (row counts and SHA-256 per file).",
+        "operationId": "export_my_data_api_v1_export_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/zip": {}
+            },
+            "description": "A zip of your data"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Missing or invalid access token"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Export My Data",
+        "tags": [
+          "export"
+        ]
+      }
+    },
     "/api/v1/import-profiles": {
       "get": {
         "operationId": "list_profiles_api_v1_import_profiles_get",

@@ -7,7 +7,7 @@ MERGE_POLICY: auto-after-green-ci
 <!-- Change to "wait-for-human" if Krishay wants to review each PR before it merges. -->
 
 ## Status
-- Current milestone: M7 (M0-M6 done)
+- Current milestone: M8 (M0-M7 done)
 - Status: IN PROGRESS
 - Branch: `claude/hopeful-euler-ro7kla` (M0-M4 merged to main in PR #7; M5+ on the same branch)
 - Last updated: 2026-11-18
@@ -23,7 +23,7 @@ MERGE_POLICY: auto-after-green-ci
 | M4 | Ledger integrity | done | #7 | docs/learning/M4-ledger-integrity.md |
 | M5 | Jobs and categorization | done | (next PR) | docs/learning/M5-jobs-categorization.md |
 | M6 | Reports and budgets | done | (next PR) | docs/learning/M6-reports-budgets.md |
-| M7 | Week-2 gate: export, restore, isolation, end-to-end | todo | | |
+| M7 | Week-2 gate: export, restore, isolation, end-to-end | done | (next PR) | docs/learning/M7-export-restore-seed.md |
 | M8 | Goals, wishlist, projections, purchase scenario | todo | | |
 | M9 | Forecast and insights | todo | | |
 | M10 | Assistant | todo | | |
@@ -38,6 +38,17 @@ MERGE_POLICY: auto-after-green-ci
 (Date, decision, reason. Include every dependency added and every deviation from the handoff.)
 - 2026-11-18: From M5 on, commits carry a `Co-Authored-By: Claude` trailer (Krishay's request);
   author stays Krishay. Each milestone is pushed when done.
+- 2026-11-18 M7: Export adds `transaction_events.json` (audit history is the user's data too) and
+  puts balance snapshots inside `accounts.json`. Not exported: jobs, import staging rows,
+  categorization rules, access_audit (operational). The manifest has no timestamp, and the zip uses
+  fixed entry timestamps, so identical data gives an identical file.
+- 2026-11-18 M7: CSV escaping also prefixes cells that start with `'`, so un-escaping is exact.
+- 2026-11-18 M7: The restore function is test-only (`tests/export_restore.py`), restoring as a new
+  user into a scratch database `finance_restore_scratch`.
+- 2026-11-18 M7: Seed users `user.a@example.test` / `user.b@example.test`: 3 complete months before
+  the current one plus the current month up to today; deterministic per user and month; ATM
+  withdrawals paired to the wallet; one Amazon order with a linked partial refund; budgets for the
+  current month.
 - 2026-11-18: `scripts/dev.py demo` (app/tools/demo.py) built early (handoff lists it for M13)
   because manual testing in /docs was tiring and error-prone (Swagger pre-fills placeholder ids).
   It runs journeys 1-7 on a scratch database with 26 checked values; also a pytest, a CI step and
@@ -177,6 +188,11 @@ MERGE_POLICY: auto-after-green-ci
 
 ## Evidence log
 (Commands run and their results that prove a milestone works, e.g. test counts, timings, backup dry run.)
+- 2026-11-18 M7: `dev.py check` all 10 steps PASS (incl. demo 26/26); 388 tests (~42 s); coverage
+  96%. Export -> restore -> export manifests identical (17 transactions, events, refund, transfer,
+  budgets). Seed run twice on the dev DB: 105/101 added, then 0/0. Operator backup dry run: backup
+  88 KB (pg_dump 17.12), deleted budgets (6 -> 0), restore --yes -> 4 users / 231 transactions /
+  179 events / 6 budgets, identical to before.
 - 2026-11-18 M6: `dev.py check` all PASS; 371 tests (~35 s); coverage 97%. Feb 2028 fixture: month
   net 4250.00, leap day net -700.50, ISO week 28 Feb-5 Mar net -250.50, year net 6400.00;
   budget boundaries 799.99 ok / 800.00 warning / 1000.00 over; too_early before day 7.
