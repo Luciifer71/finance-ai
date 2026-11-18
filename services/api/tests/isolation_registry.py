@@ -82,6 +82,10 @@ register(
         name="transactions",
         create=_create_transaction,
         detail="/api/v1/transactions/{id}",
+        updates=[
+            ("PATCH", "/api/v1/transactions/{id}", {"notes": "stolen", "is_excluded": True}),
+            ("GET", "/api/v1/transactions/{id}/events", {}),
+        ],
         lists=["/api/v1/transactions", "/api/v1/transactions?include_excluded=true"],
     )
 )
@@ -111,5 +115,38 @@ register(
             ("POST", "/api/v1/imports/{id}/cancel", {}),
         ],
         lists=["/api/v1/imports"],
+    )
+)
+
+
+def _create_transfer(client: TestClient, user: ApiUser) -> str:
+    out_account, in_account = _create_account(client, user), _create_account(client, user)
+    ids = []
+    for account_id, direction in ((out_account, "debit"), (in_account, "credit")):
+        response = client.post(
+            "/api/v1/transactions",
+            json={
+                "account_id": account_id,
+                "posted_on": "2026-11-10",
+                "amount": "300.00",
+                "direction": direction,
+            },
+            headers=user.headers,
+        )
+        ids.append(response.json()["id"])
+    response = client.post(
+        "/api/v1/transfers",
+        json={"debit_transaction_id": ids[0], "credit_transaction_id": ids[1]},
+        headers=user.headers,
+    )
+    assert response.status_code == 201, response.text
+    return str(response.json()["transfer_group_id"])
+
+
+register(
+    IsolatedResource(
+        name="transfers",
+        create=_create_transfer,
+        deletes=[("DELETE", "/api/v1/transfers/{id}")],
     )
 )

@@ -12,7 +12,16 @@ from app.core.errors import ProblemError
 from app.core.pagination import DEFAULT_LIMIT, MAX_LIMIT
 from app.domain.money import MoneyFormatError, parse_money
 from app.repositories.transactions import TransactionFilters
-from app.schemas.transactions import ManualTransactionCreate, TransactionOut, TransactionPage
+from app.schemas.transactions import (
+    ManualTransactionCreate,
+    TransactionDetail,
+    TransactionEventList,
+    TransactionEventOut,
+    TransactionOut,
+    TransactionPage,
+    TransactionUpdate,
+)
+from app.services import ledger
 from app.services import transactions as service
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
@@ -74,6 +83,35 @@ def create_transaction(
     return service.to_out(service.create_manual(session, user.id, body))
 
 
-@router.get("/{transaction_id}", response_model=TransactionOut)
-def read_transaction(transaction_id: UUID, user: CurrentUser, session: DbSession) -> TransactionOut:
-    return service.to_out(service.get_transaction(session, user.id, transaction_id))
+def detail(session: DbSession, user_id: UUID, transaction_id: UUID) -> TransactionDetail:
+    tx = service.get_transaction(session, user_id, transaction_id)
+    events = ledger.list_events(session, user_id, transaction_id)
+    return TransactionDetail(
+        **service.to_out(tx).model_dump(),
+        events=[TransactionEventOut.model_validate(e) for e in events],
+    )
+
+
+@router.get("/{transaction_id}", response_model=TransactionDetail)
+def read_transaction(
+    transaction_id: UUID, user: CurrentUser, session: DbSession
+) -> TransactionDetail:
+    return detail(session, user.id, transaction_id)
+
+
+@router.patch("/{transaction_id}", response_model=TransactionDetail)
+def update_transaction(
+    transaction_id: UUID, body: TransactionUpdate, user: CurrentUser, session: DbSession
+) -> TransactionDetail:
+    """Change category, notes, excluded flag or type. Every change is recorded as an event."""
+    fields = {name: getattr(body, name) for name in body.model_fields_set}
+    ledger.update_transaction(session, user.id, transaction_id, fields)
+    return detail(session, user.id, transaction_id)
+
+
+@router.get("/{transaction_id}/events", response_model=TransactionEventList)
+def list_events(
+    transaction_id: UUID, user: CurrentUser, session: DbSession
+) -> TransactionEventList:
+    events = ledger.list_events(session, user.id, transaction_id)
+    return TransactionEventList(items=[TransactionEventOut.model_validate(e) for e in events])

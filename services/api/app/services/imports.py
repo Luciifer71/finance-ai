@@ -31,7 +31,7 @@ from app.models import (
     TransactionImport,
 )
 from app.repositories.common import get_owned_or_404
-from app.services import audit
+from app.services import audit, transfers
 
 CATEGORIZE_KIND = "categorize_import"
 ACCEPTED_CONTENT_TYPES = {
@@ -272,6 +272,7 @@ def commit_import(session: Session, user_id: UUID, import_id: UUID, now: datetim
         )
     )
     inserted: set[str] = set()
+    new_ids: list[UUID] = []
     if valid:
         result = session.execute(
             insert(Transaction)
@@ -296,9 +297,11 @@ def commit_import(session: Session, user_id: UUID, import_id: UUID, now: datetim
             .on_conflict_do_nothing(
                 index_elements=[Transaction.account_id, Transaction.fingerprint]
             )
-            .returning(Transaction.fingerprint)
+            .returning(Transaction.id, Transaction.fingerprint)
         )
-        inserted = set(result.scalars())
+        for new_id, fingerprint in result.all():
+            inserted.add(fingerprint)
+            new_ids.append(new_id)
     # Rows imported meanwhile by another file are skipped, and marked so in the preview.
     raced = [row.fingerprint for row in valid if row.fingerprint not in inserted]
     if raced:
@@ -309,6 +312,8 @@ def commit_import(session: Session, user_id: UUID, import_id: UUID, now: datetim
         )
 
     _record_statement_balance(session, user_id, record)
+    # Unambiguous self-transfers are paired now (actor "system"); the rest are suggestions.
+    transfers.auto_pair(session, user_id, new_ids)
     record.rows_imported = len(inserted)
     record.rows_skipped += len(raced)
     record.status = "completed"

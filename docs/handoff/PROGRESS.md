@@ -7,7 +7,7 @@ MERGE_POLICY: auto-after-green-ci
 <!-- Change to "wait-for-human" if Krishay wants to review each PR before it merges. -->
 
 ## Status
-- Current milestone: M4 (M0-M3 done)
+- Current milestone: M5 (M0-M4 done)
 - Status: IN PROGRESS
 - Branch: `claude/hopeful-euler-ro7kla` (all milestones; see Decisions)
 - Last updated: 2026-11-18
@@ -20,7 +20,7 @@ MERGE_POLICY: auto-after-green-ci
 | M1 | Authentication and user isolation | done | branch (PR at end) | docs/learning/M1-authentication.md |
 | M2 | Accounts, categories, balances, transaction reads | done | branch (PR at end) | docs/learning/M2-accounts-balances.md |
 | M3 | CSV import pipeline | done | branch (PR at end) | docs/learning/M3-csv-import.md |
-| M4 | Ledger integrity | todo | | |
+| M4 | Ledger integrity | done | branch (PR at end) | docs/learning/M4-ledger-integrity.md |
 | M5 | Jobs and categorization | todo | | |
 | M6 | Reports and budgets | todo | | |
 | M7 | Week-2 gate: export, restore, isolation, end-to-end | todo | | |
@@ -36,6 +36,30 @@ MERGE_POLICY: auto-after-green-ci
 
 ## Decisions
 (Date, decision, reason. Include every dependency added and every deviation from the handoff.)
+- 2026-11-18 M4: Immutable fact columns (trigger): id, user_id, account_id, amount, direction,
+  posted_on, occurred_at, description, source, external_id, fingerprint, import_id,
+  import_row_number, created_at. DELETE on transactions is not blocked by a trigger (no code path
+  deletes; a future "delete my account" may need it) - recorded as an accepted gap.
+- 2026-11-18 M4: Transfer group validity is enforced in the service and by a DEFERRABLE INITIALLY
+  DEFERRED constraint trigger (fires at commit; tests use SET CONSTRAINTS ALL IMMEDIATE).
+- 2026-11-18 M4: `transaction_events.seq` (identity) orders events; `created_at` is identical for
+  every event written in one DB transaction. One PATCH = one event (`category_changed`,
+  `notes_changed`, `exclusion_changed`, `type_changed`, or `edited` for several fields); a no-op
+  PATCH writes nothing. Other types: transfer_paired/unpaired, refund_linked.
+- 2026-11-18 M4: PATCH type changes are limited to income <-> refund on credits; transfers only
+  via pairing. If the current category no longer fits the new type it is cleared (in the event).
+- 2026-11-18 M4: Auto-pair (actor system) runs inside the import commit transaction and requires
+  mutual uniqueness: the new row has exactly one candidate and that candidate has exactly one.
+  Manual pairing does not require the 3-day window (bank transfers can be slow).
+- 2026-11-18 M4: Cash withdrawal confirmation (`POST /transfers/cash-withdrawals`) creates the cash
+  side as a new row (source `cash_withdrawal`) and pairs it. Such a group cannot be unpaired (409):
+  rows cannot be deleted, and leaving an "income" row would invent income. Fix via an adjustment.
+- 2026-11-18 M4: Refund linking: original must be an expense; refund a non-transfer credit; any of
+  the user's accounts (suggestions use the same account and a 60-day window). Linking the same pair
+  twice is a no-op; an income-kind category on the refund is cleared.
+- 2026-11-18 M4: Merchant normalization (6.12) implemented now for refunds: strips the `@provider`
+  part of UPI handles but keeps the name, removes 6+ digit runs, filler words (incl. REFUND/ORDER)
+  and repeated tokens, keeps 3 tokens. Number hints (last 4) use digit boundaries ("XX4321" matches).
 - 2026-11-18 M3: A failed, cancelled or never-committed import of the same file (same account,
   same hash) is **deleted and replaced** on re-upload (its staging rows cascade); only a completed
   import gives 409 `import.already_imported`. A file rejected while parsing is recorded as a
@@ -119,6 +143,9 @@ MERGE_POLICY: auto-after-green-ci
 
 ## Evidence log
 (Commands run and their results that prove a milestone works, e.g. test counts, timings, backup dry run.)
+- 2026-11-18 M4: `dev.py check` all PASS; 330 tests (~25 s); coverage 97%. DB rejects raw-SQL
+  updates to 7 fact columns; refund boundary 600+400=1000 ok, +0.01 rejected; auto-pair only with
+  hint and a single candidate.
 - 2026-11-18 M3: `dev.py check` all PASS; 263 tests; coverage 97%. Acceptance: clean import -> 12
   rows, balance 34125.00 verified; re-import -> 0; overlap -> +4, 91418.50 verified, reconciles;
   property test (25 random statements) import twice == import once.

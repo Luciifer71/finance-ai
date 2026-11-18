@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from pydantic import AwareDatetime, Field, StringConstraints
@@ -26,7 +26,37 @@ class TransactionOut(ApiModel):
     occurred_at: UtcDatetime | None
     transfer_group_id: UUID | None
     refund_of_id: UUID | None
+    notes: str | None
+    category_source: Literal["rule", "user", "system", "none"]
+    is_excluded: bool
     created_at: UtcDatetime
+
+
+class TransactionEventOut(ApiModel):
+    id: UUID
+    event_type: str
+    before: dict[str, Any]
+    after: dict[str, Any]
+    actor: Literal["user", "system", "rule"]
+    reason: str | None
+    created_at: UtcDatetime
+
+
+class TransactionDetail(TransactionOut):
+    events: list[TransactionEventOut]
+
+
+class TransactionEventList(ApiModel):
+    items: list[TransactionEventOut]
+
+
+class TransactionUpdate(ApiModel):
+    """Only the fields sent are changed. Amount, date and description can never change."""
+
+    category_id: UUID | None = Field(default=None, description="null = uncategorized")
+    notes: Annotated[str, StringConstraints(max_length=1000)] | None = None
+    is_excluded: bool | None = Field(default=None, description="Hide from reports")
+    transaction_type: Literal["income", "expense", "refund"] | None = None
 
 
 class TransactionPage(ApiModel):

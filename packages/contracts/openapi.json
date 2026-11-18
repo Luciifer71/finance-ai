@@ -345,6 +345,72 @@
         "title": "Body_upload_statement_api_v1_imports_post",
         "type": "object"
       },
+      "CashWithdrawalIn": {
+        "additionalProperties": false,
+        "properties": {
+          "cash_account_id": {
+            "format": "uuid",
+            "title": "Cash Account Id",
+            "type": "string"
+          },
+          "transaction_id": {
+            "format": "uuid",
+            "title": "Transaction Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "transaction_id",
+          "cash_account_id"
+        ],
+        "title": "CashWithdrawalIn",
+        "type": "object"
+      },
+      "CashWithdrawalSuggestion": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "transfer_to_cash_account",
+              "categorize_as_cash_withdrawal",
+              "choose_cash_account"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "cash_account_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Cash Account Ids",
+            "type": "array"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "transaction": {
+            "$ref": "#/components/schemas/TransactionOut"
+          }
+        },
+        "required": [
+          "transaction",
+          "action",
+          "cash_account_ids",
+          "category_id"
+        ],
+        "title": "CashWithdrawalSuggestion",
+        "type": "object"
+      },
       "CategoryCreate": {
         "additionalProperties": false,
         "properties": {
@@ -1354,6 +1420,66 @@
         "title": "ReconciliationPairOut",
         "type": "object"
       },
+      "RefundLinkIn": {
+        "additionalProperties": false,
+        "properties": {
+          "original_transaction_id": {
+            "format": "uuid",
+            "title": "Original Transaction Id",
+            "type": "string"
+          },
+          "refund_transaction_id": {
+            "format": "uuid",
+            "title": "Refund Transaction Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "refund_transaction_id",
+          "original_transaction_id"
+        ],
+        "title": "RefundLinkIn",
+        "type": "object"
+      },
+      "RefundSuggestionOut": {
+        "additionalProperties": false,
+        "properties": {
+          "merchant": {
+            "title": "Merchant",
+            "type": "string"
+          },
+          "original": {
+            "$ref": "#/components/schemas/TransactionOut"
+          },
+          "refund": {
+            "$ref": "#/components/schemas/TransactionOut"
+          }
+        },
+        "required": [
+          "refund",
+          "original",
+          "merchant"
+        ],
+        "title": "RefundSuggestionOut",
+        "type": "object"
+      },
+      "RefundSuggestions": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RefundSuggestionOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "RefundSuggestions",
+        "type": "object"
+      },
       "RowCounts": {
         "additionalProperties": false,
         "properties": {
@@ -1383,7 +1509,7 @@
         "title": "RowCounts",
         "type": "object"
       },
-      "TransactionOut": {
+      "TransactionDetail": {
         "additionalProperties": false,
         "properties": {
           "account_id": {
@@ -1412,6 +1538,16 @@
             ],
             "title": "Category Id"
           },
+          "category_source": {
+            "enum": [
+              "rule",
+              "user",
+              "system",
+              "none"
+            ],
+            "title": "Category Source",
+            "type": "string"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -1436,6 +1572,13 @@
             "title": "Direction",
             "type": "string"
           },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/TransactionEventOut"
+            },
+            "title": "Events",
+            "type": "array"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
@@ -1452,6 +1595,21 @@
               }
             ],
             "title": "Import Id"
+          },
+          "is_excluded": {
+            "title": "Is Excluded",
+            "type": "boolean"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
           },
           "occurred_at": {
             "anyOf": [
@@ -1533,6 +1691,270 @@
           "occurred_at",
           "transfer_group_id",
           "refund_of_id",
+          "notes",
+          "category_source",
+          "is_excluded",
+          "created_at",
+          "events"
+        ],
+        "title": "TransactionDetail",
+        "type": "object"
+      },
+      "TransactionEventList": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TransactionEventOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "TransactionEventList",
+        "type": "object"
+      },
+      "TransactionEventOut": {
+        "additionalProperties": false,
+        "properties": {
+          "actor": {
+            "enum": [
+              "user",
+              "system",
+              "rule"
+            ],
+            "title": "Actor",
+            "type": "string"
+          },
+          "after": {
+            "additionalProperties": true,
+            "title": "After",
+            "type": "object"
+          },
+          "before": {
+            "additionalProperties": true,
+            "title": "Before",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "id",
+          "event_type",
+          "before",
+          "after",
+          "actor",
+          "reason",
+          "created_at"
+        ],
+        "title": "TransactionEventOut",
+        "type": "object"
+      },
+      "TransactionOut": {
+        "additionalProperties": false,
+        "properties": {
+          "account_id": {
+            "format": "uuid",
+            "title": "Account Id",
+            "type": "string"
+          },
+          "amount": {
+            "description": "Always positive; the sign is in `direction`",
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "category_source": {
+            "enum": [
+              "rule",
+              "user",
+              "system",
+              "none"
+            ],
+            "title": "Category Source",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "direction": {
+            "enum": [
+              "debit",
+              "credit"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "import_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Import Id"
+          },
+          "is_excluded": {
+            "title": "Is Excluded",
+            "type": "boolean"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "occurred_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occurred At"
+          },
+          "posted_on": {
+            "format": "date",
+            "title": "Posted On",
+            "type": "string"
+          },
+          "refund_of_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Of Id"
+          },
+          "signed_amount": {
+            "description": "+amount for credit, -amount for debit",
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Signed Amount",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "transaction_type": {
+            "enum": [
+              "income",
+              "expense",
+              "transfer",
+              "refund"
+            ],
+            "title": "Transaction Type",
+            "type": "string"
+          },
+          "transfer_group_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transfer Group Id"
+          }
+        },
+        "required": [
+          "id",
+          "account_id",
+          "import_id",
+          "category_id",
+          "amount",
+          "signed_amount",
+          "direction",
+          "transaction_type",
+          "description",
+          "source",
+          "posted_on",
+          "occurred_at",
+          "transfer_group_id",
+          "refund_of_id",
+          "notes",
+          "category_source",
+          "is_excluded",
           "created_at"
         ],
         "title": "TransactionOut",
@@ -1565,6 +1987,173 @@
           "next_cursor"
         ],
         "title": "TransactionPage",
+        "type": "object"
+      },
+      "TransactionUpdate": {
+        "additionalProperties": false,
+        "description": "Only the fields sent are changed. Amount, date and description can never change.",
+        "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null = uncategorized",
+            "title": "Category Id"
+          },
+          "is_excluded": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hide from reports",
+            "title": "Is Excluded"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "transaction_type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "income",
+                  "expense",
+                  "refund"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transaction Type"
+          }
+        },
+        "title": "TransactionUpdate",
+        "type": "object"
+      },
+      "TransferOut": {
+        "additionalProperties": false,
+        "properties": {
+          "transactions": {
+            "items": {
+              "$ref": "#/components/schemas/TransactionOut"
+            },
+            "title": "Transactions",
+            "type": "array"
+          },
+          "transfer_group_id": {
+            "format": "uuid",
+            "title": "Transfer Group Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "transfer_group_id",
+          "transactions"
+        ],
+        "title": "TransferOut",
+        "type": "object"
+      },
+      "TransferPairIn": {
+        "additionalProperties": false,
+        "properties": {
+          "credit_transaction_id": {
+            "format": "uuid",
+            "title": "Credit Transaction Id",
+            "type": "string"
+          },
+          "debit_transaction_id": {
+            "format": "uuid",
+            "title": "Debit Transaction Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "debit_transaction_id",
+          "credit_transaction_id"
+        ],
+        "title": "TransferPairIn",
+        "type": "object"
+      },
+      "TransferSuggestion": {
+        "additionalProperties": false,
+        "properties": {
+          "candidates_for_credit": {
+            "title": "Candidates For Credit",
+            "type": "integer"
+          },
+          "candidates_for_debit": {
+            "title": "Candidates For Debit",
+            "type": "integer"
+          },
+          "credit": {
+            "$ref": "#/components/schemas/TransactionOut"
+          },
+          "days_apart": {
+            "title": "Days Apart",
+            "type": "integer"
+          },
+          "debit": {
+            "$ref": "#/components/schemas/TransactionOut"
+          },
+          "has_self_transfer_hint": {
+            "title": "Has Self Transfer Hint",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "debit",
+          "credit",
+          "days_apart",
+          "has_self_transfer_hint",
+          "candidates_for_debit",
+          "candidates_for_credit"
+        ],
+        "title": "TransferSuggestion",
+        "type": "object"
+      },
+      "TransferSuggestions": {
+        "additionalProperties": false,
+        "properties": {
+          "cash_withdrawals": {
+            "items": {
+              "$ref": "#/components/schemas/CashWithdrawalSuggestion"
+            },
+            "title": "Cash Withdrawals",
+            "type": "array"
+          },
+          "pairs": {
+            "items": {
+              "$ref": "#/components/schemas/TransferSuggestion"
+            },
+            "title": "Pairs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "pairs",
+          "cash_withdrawals"
+        ],
+        "title": "TransferSuggestions",
         "type": "object"
       },
       "ValidationError": {
@@ -2454,6 +3043,78 @@
         ]
       }
     },
+    "/api/v1/refunds": {
+      "post": {
+        "operationId": "link_api_v1_refunds_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefundLinkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Link",
+        "tags": [
+          "refunds"
+        ]
+      }
+    },
+    "/api/v1/refunds/suggestions": {
+      "get": {
+        "operationId": "suggestions_api_v1_refunds_suggestions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundSuggestions"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Suggestions",
+        "tags": [
+          "refunds"
+        ]
+      }
+    },
     "/api/v1/transactions": {
       "get": {
         "description": "Newest first. Pass `next_cursor` from one page as `cursor` to get the next.",
@@ -2741,7 +3402,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TransactionOut"
+                  "$ref": "#/components/schemas/TransactionDetail"
                 }
               }
             },
@@ -2766,6 +3427,279 @@
         "summary": "Read Transaction",
         "tags": [
           "transactions"
+        ]
+      },
+      "patch": {
+        "description": "Change category, notes, excluded flag or type. Every change is recorded as an event.",
+        "operationId": "update_transaction_api_v1_transactions__transaction_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "transaction_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Transaction Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Transaction",
+        "tags": [
+          "transactions"
+        ]
+      }
+    },
+    "/api/v1/transactions/{transaction_id}/events": {
+      "get": {
+        "operationId": "list_events_api_v1_transactions__transaction_id__events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "transaction_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Transaction Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionEventList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Events",
+        "tags": [
+          "transactions"
+        ]
+      }
+    },
+    "/api/v1/transfers": {
+      "post": {
+        "operationId": "pair_api_v1_transfers_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferPairIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Pair",
+        "tags": [
+          "transfers"
+        ]
+      }
+    },
+    "/api/v1/transfers/cash-withdrawals": {
+      "post": {
+        "description": "Record the cash arriving in your cash account and pair it with the bank withdrawal.",
+        "operationId": "confirm_cash_withdrawal_api_v1_transfers_cash_withdrawals_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CashWithdrawalIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Confirm Cash Withdrawal",
+        "tags": [
+          "transfers"
+        ]
+      }
+    },
+    "/api/v1/transfers/suggestions": {
+      "get": {
+        "operationId": "suggestions_api_v1_transfers_suggestions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferSuggestions"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Suggestions",
+        "tags": [
+          "transfers"
+        ]
+      }
+    },
+    "/api/v1/transfers/{group_id}": {
+      "delete": {
+        "description": "Undo a pairing. Each side gets back its previous type and category (audited).",
+        "operationId": "unpair_api_v1_transfers__group_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Unpair",
+        "tags": [
+          "transfers"
         ]
       }
     },

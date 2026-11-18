@@ -57,6 +57,8 @@ def list_page(
         statement = statement.where(Transaction.amount >= filters.min_amount)
     if filters.max_amount is not None:
         statement = statement.where(Transaction.amount <= filters.max_amount)
+    if not filters.include_excluded:
+        statement = statement.where(Transaction.is_excluded.is_(False))
     if after is not None:
         posted_on, row_id = after
         statement = statement.where(

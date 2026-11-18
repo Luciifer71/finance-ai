@@ -6,12 +6,14 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     CheckConstraint,
     Date,
     DateTime,
     ForeignKey,
     ForeignKeyConstraint,
+    Identity,
     Index,
     Integer,
     MetaData,
@@ -293,6 +295,16 @@ class Transaction(Base):
         Uuid(as_uuid=True),
         nullable=True,
     )
+    # --- user-editable fields (every change writes a transaction_events row) ---
+    notes: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    # Who chose the category: a rule, the user, the system, or nobody yet.
+    category_source: Mapped[str] = mapped_column(
+        String(10), nullable=False, default="none", server_default="none"
+    )
+    # Hidden from reports; the fact itself stays (deleting is not supported).
+    is_excluded: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -354,6 +366,10 @@ class Transaction(Base):
         CheckConstraint(
             "refund_of_id IS NULL OR (transaction_type = 'refund' AND refund_of_id <> id)",
             name="refund_link_only_on_refunds",
+        ),
+        CheckConstraint(
+            "category_source IN ('rule', 'user', 'system', 'none')",
+            name="valid_category_source",
         ),
         Index("ix_transactions_user_posted", "user_id", "posted_on"),
         Index("ix_transactions_account", "account_id"),
@@ -584,3 +600,41 @@ class AccessAudit(Base):
     )
 
     __table_args__ = (Index("ix_access_audit_user_created", "user_id", "created_at"),)
+
+
+class TransactionEvent(Base):
+    """Append-only history of every change to a transaction's editable fields.
+
+    Written in the same database transaction as the change. A trigger rejects
+    any UPDATE or DELETE, so history cannot be rewritten.
+    """
+
+    __tablename__ = "transaction_events"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    # Strictly increasing order of writing; created_at is the same for every event of
+    # one database transaction, so it cannot order them.
+    seq: Mapped[int] = mapped_column(BigInteger, Identity(always=True), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    transaction_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False)
+    event_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    before: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    after: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    actor: Mapped[str] = mapped_column(String(10), nullable=False)
+    reason: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["transaction_id", "user_id"],
+            ["transactions.id", "transactions.user_id"],
+            name="fk_event_transaction_owner",
+        ),
+        CheckConstraint("actor IN ('user', 'system', 'rule')", name="valid_actor"),
+        UniqueConstraint("seq", name="uq_transaction_events_seq"),
+        Index("ix_transaction_events_tx_seq", "transaction_id", "seq"),
+    )

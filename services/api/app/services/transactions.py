@@ -36,6 +36,9 @@ def to_out(tx: Transaction) -> TransactionOut:
             "occurred_at": tx.occurred_at,
             "transfer_group_id": tx.transfer_group_id,
             "refund_of_id": tx.refund_of_id,
+            "notes": tx.notes,
+            "category_source": tx.category_source,
+            "is_excluded": tx.is_excluded,
             "created_at": tx.created_at,
         }
     )
