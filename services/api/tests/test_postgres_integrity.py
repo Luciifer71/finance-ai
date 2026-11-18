@@ -1,15 +1,11 @@
 """PostgreSQL integration tests using synthetic financial data."""
 
-import os
 from datetime import date
 from decimal import Decimal
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.engine import make_url
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
 
 from app.models import (
     BalanceSnapshot,
@@ -19,48 +15,6 @@ from app.models import (
     TransactionImport,
     User,
 )
-
-
-@pytest.fixture
-def db_session():
-    """Use only the isolated test database and roll back all writes."""
-    database_url = os.environ.get("TEST_DATABASE_URL")
-
-    if not database_url:
-        pytest.fail("TEST_DATABASE_URL must be configured explicitly.")
-
-    url = make_url(database_url)
-
-    if (
-        url.drivername != "postgresql+psycopg"
-        or url.database != "finance_test"
-        or url.host not in ("127.0.0.1", "localhost")
-        or url.port != 5432
-    ):
-        pytest.fail("Refusing to run against an unexpected database.")
-
-    if database_url == os.environ.get("DATABASE_URL"):
-        pytest.fail("Test database must differ from development database.")
-
-    engine = create_engine(database_url, pool_pre_ping=True)
-
-    try:
-        with engine.connect() as connection:
-            outer_transaction = connection.begin()
-
-            session = Session(
-                bind=connection,
-                join_transaction_mode="create_savepoint",
-            )
-
-            try:
-                yield session
-            finally:
-                session.close()
-                if outer_transaction.is_active:
-                    outer_transaction.rollback()
-    finally:
-        engine.dispose()
 
 
 def create_user_and_account(session, email=None):

@@ -90,3 +90,6 @@ reports/local/
 # Claude Code: personal settings and local dev signing keys
 .claude/settings.local.json
 .dev-keys/
+
+# Local database backups made by scripts/dev.py backup
+backups/
