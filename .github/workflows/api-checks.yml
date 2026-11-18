@@ -87,6 +87,9 @@ jobs:
         working-directory: services/api
         run: python -m mypy
 
+      - name: End-to-end demo of every user journey
+        run: python scripts/dev.py demo
+
       - name: Check OpenAPI contract is current
         working-directory: services/api
         run: python -m app.tools.openapi_export --check

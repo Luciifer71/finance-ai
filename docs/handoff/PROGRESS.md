@@ -38,6 +38,10 @@ MERGE_POLICY: auto-after-green-ci
 (Date, decision, reason. Include every dependency added and every deviation from the handoff.)
 - 2026-11-18: From M5 on, commits carry a `Co-Authored-By: Claude` trailer (Krishay's request);
   author stays Krishay. Each milestone is pushed when done.
+- 2026-11-18: `scripts/dev.py demo` (app/tools/demo.py) built early (handoff lists it for M13)
+  because manual testing in /docs was tiring and error-prone (Swagger pre-fills placeholder ids).
+  It runs journeys 1-7 on a scratch database with 26 checked values; also a pytest, a CI step and
+  the last step of `dev.py check`. M13 extends it to journeys 8-12.
 - 2026-11-18 fix: found while Krishay tried /docs by hand. (1) Access log showed "/accounts"
   instead of "/api/v1/accounts" (FastAPI 0.16x reports routes without router prefixes); the
   middleware now rebuilds the full template. (2) Redaction mangled our own request ids (hex with 6+

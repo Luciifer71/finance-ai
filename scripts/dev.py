@@ -18,7 +18,7 @@ Commands
     export-openapi  write packages/contracts/openapi.json
     backup [FILE]   pg_dump the dev database (custom format) into backups/
     restore FILE --yes   replace the dev database with a backup (destructive)
-    demo            run the end-to-end demo against a clean scratch database
+    demo            every user journey through the API on a scratch database, PASS/FAIL table
 
 Settings come from environment variables; a repo-root .env file (never committed)
 is read first if it exists. Always use 127.0.0.1, never localhost (see README).
