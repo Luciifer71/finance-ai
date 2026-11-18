@@ -5,6 +5,7 @@ from decimal import Decimal
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     Date,
     DateTime,
@@ -17,6 +18,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
     Uuid,
+    false,
     func,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -86,6 +88,12 @@ class FinancialAccount(Base):
     institution: Mapped[str | None] = mapped_column(String(120), nullable=True)
     account_type: Mapped[str] = mapped_column(String(20), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="INR")
+    # Last 4 digits of the account number, optional; helps spot self-transfers.
+    last4: Mapped[str | None] = mapped_column(String(4), nullable=True)
+    # Archived accounts keep their history but are hidden by default. Never deleted.
+    is_archived: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -102,6 +110,7 @@ class FinancialAccount(Base):
             "currency = 'INR'",
             name="supported_currency",
         ),
+        CheckConstraint("last4 IS NULL OR last4 ~ '^[0-9]{4}$'", name="valid_last4"),
         Index("ix_financial_accounts_user", "user_id"),
     )
 
@@ -123,6 +132,9 @@ class Category(Base):
     )
     name: Mapped[str] = mapped_column(String(60), nullable=False)
     kind: Mapped[str] = mapped_column(String(10), nullable=False)
+    is_archived: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

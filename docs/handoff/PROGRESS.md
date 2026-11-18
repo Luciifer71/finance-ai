@@ -7,7 +7,7 @@ MERGE_POLICY: auto-after-green-ci
 <!-- Change to "wait-for-human" if Krishay wants to review each PR before it merges. -->
 
 ## Status
-- Current milestone: M2 (M0-M1 done)
+- Current milestone: M3 (M0-M2 done)
 - Status: IN PROGRESS
 - Branch: `claude/hopeful-euler-ro7kla` (all milestones; see Decisions)
 - Last updated: 2026-11-18
@@ -18,7 +18,7 @@ MERGE_POLICY: auto-after-green-ci
 | pre | Ledger schema v2, fingerprints | done | #6 | (explained in chat) |
 | M0 | Foundation and guardrails | done | branch (PR at end) | docs/learning/M0-foundation.md |
 | M1 | Authentication and user isolation | done | branch (PR at end) | docs/learning/M1-authentication.md |
-| M2 | Accounts, categories, balances, transaction reads | todo | | |
+| M2 | Accounts, categories, balances, transaction reads | done | branch (PR at end) | docs/learning/M2-accounts-balances.md |
 | M3 | CSV import pipeline | todo | | |
 | M4 | Ledger integrity | todo | | |
 | M5 | Jobs and categorization | todo | | |
@@ -36,6 +36,21 @@ MERGE_POLICY: auto-after-green-ci
 
 ## Decisions
 (Date, decision, reason. Include every dependency added and every deviation from the handoff.)
+- 2026-11-18 M2: Balance reason when the anchor is user-entered: `no_statement` if the account has
+  no statement snapshot on or before the date, else `user_entered_anchor`. Reason precedence:
+  no_anchor > (user anchor) > reconciliation_mismatch > transactions_after_statement. Verification
+  checks every consecutive statement pair up to the requested date.
+- 2026-11-18 M2: Excluded transactions (M4) will still count in balances: exclusion hides a row from
+  reports, but the money really moved. (Section 6.7 only says "disappears from reports".)
+- 2026-11-18 M2: `POST /accounts/{id}/opening-balance` for a date that already has a user-entered
+  snapshot replaces it (it is the user's own number, not a ledger fact).
+- 2026-11-18 M2: Manual transactions may be income, expense or refund; transfers only come from
+  pairing (M4). A category must be active and of matching kind (expense/refund -> expense
+  category, income -> income category). `occurred_at` must include a time zone.
+- 2026-11-18 M2: `Uncategorized` can be neither archived nor renamed (other code relies on it).
+  Category names are unique per user ignoring case (service check; DB keeps the exact-match unique).
+- 2026-11-18 M2: Money query parameters (`min_amount`, `max_amount`) use the same strict parser as
+  bodies. The transaction DTO does not expose `fingerprint` (internal dedup detail).
 - 2026-11-18 M1: Supabase facts checked via search of supabase.com docs (the docs host itself is
   blocked from the cloud session): JWKS at `<project>/auth/v1/.well-known/jwks.json`, issuer
   `<project>/auth/v1`, keys ES256 or RS256, and the JWKS may also list a legacy HS256 secret, which we
@@ -83,6 +98,8 @@ MERGE_POLICY: auto-after-green-ci
 
 ## Evidence log
 (Commands run and their results that prove a milestone works, e.g. test counts, timings, backup dry run.)
+- 2026-11-18 M2: `dev.py check` all PASS; 214 tests; coverage 97%. Isolation harness covers
+  accounts (+balance, reconciliation, opening balance), categories, transactions.
 - 2026-11-18 M1: `dev.py check` all PASS; 163 tests; coverage 95%. Concurrency test: 4 threads
   first-request the same `sub`, exactly 1 user and 21 categories exist afterwards.
 - 2026-11-18 M0: `scripts/dev.py check` all 9 steps PASS on PostgreSQL 17.12 (Docker), Python
