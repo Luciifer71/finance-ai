@@ -9,15 +9,28 @@ from fastapi import APIRouter, Depends
 from app.api.deps import get_current_user
 from app.api.v1 import (
     accounts,
+    budgets,
     categories,
     imports,
     jobs,
     me,
     refunds,
+    reports,
     transactions,
     transfers,
 )
 
 api_router = APIRouter(dependencies=[Depends(get_current_user)])
-for module in (me, accounts, categories, transactions, imports, transfers, refunds, jobs):
+for module in (
+    me,
+    accounts,
+    categories,
+    transactions,
+    imports,
+    transfers,
+    refunds,
+    jobs,
+    reports,
+    budgets,
+):
     api_router.include_router(module.router)

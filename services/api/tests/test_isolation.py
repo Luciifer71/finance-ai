@@ -19,11 +19,11 @@ def test_each_user_sees_only_their_own_identity(
 
 
 def _ids_in(payload: object) -> set[str]:
-    """Every "id" value anywhere in a JSON payload."""
+    """Every id value ("id" or any "*_id" key) anywhere in a JSON payload."""
     found: set[str] = set()
     if isinstance(payload, dict):
         for key, value in payload.items():
-            if key == "id" and isinstance(value, str):
+            if (key == "id" or key.endswith("_id")) and isinstance(value, str):
                 found.add(value)
             found |= _ids_in(value)
     elif isinstance(payload, list):

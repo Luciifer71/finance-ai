@@ -345,6 +345,319 @@
         "title": "Body_upload_statement_api_v1_imports_post",
         "type": "object"
       },
+      "BucketOut": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/TotalsOut"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "totals"
+        ],
+        "title": "BucketOut",
+        "type": "object"
+      },
+      "BudgetCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "examples": [
+              "1250.50",
+              "1,23,456.70",
+              "₹ 1,200"
+            ],
+            "title": "Amount",
+            "type": "string"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null = all spending",
+            "title": "Category Id"
+          },
+          "month": {
+            "examples": [
+              "2026-11"
+            ],
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "title": "Month",
+            "type": "string"
+          },
+          "warn_at_percent": {
+            "default": 80,
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Warn At Percent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "month",
+          "amount"
+        ],
+        "title": "BudgetCreate",
+        "type": "object"
+      },
+      "BudgetList": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BudgetOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "BudgetList",
+        "type": "object"
+      },
+      "BudgetOut": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "month": {
+            "title": "Month",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "warn_at_percent": {
+            "title": "Warn At Percent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "category_id",
+          "month",
+          "amount",
+          "warn_at_percent",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "BudgetOut",
+        "type": "object"
+      },
+      "BudgetStatusList": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BudgetStatusOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "month": {
+            "title": "Month",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "items"
+        ],
+        "title": "BudgetStatusList",
+        "type": "object"
+      },
+      "BudgetStatusOut": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "budget_id": {
+            "format": "uuid",
+            "title": "Budget Id",
+            "type": "string"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "category_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null = all spending",
+            "title": "Category Name"
+          },
+          "net_spending": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Net Spending",
+            "type": "string"
+          },
+          "percent_used": {
+            "title": "Percent Used",
+            "type": "string"
+          },
+          "projection": {
+            "$ref": "#/components/schemas/ProjectionOut"
+          },
+          "remaining": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Remaining",
+            "type": "string"
+          },
+          "spent": {
+            "description": "net spending floored at 0",
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Spent",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "warning",
+              "over"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "warn_threshold": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Warn Threshold",
+            "type": "string"
+          }
+        },
+        "required": [
+          "budget_id",
+          "category_id",
+          "category_name",
+          "amount",
+          "net_spending",
+          "spent",
+          "warn_threshold",
+          "remaining",
+          "percent_used",
+          "status",
+          "projection"
+        ],
+        "title": "BudgetStatusOut",
+        "type": "object"
+      },
+      "BudgetUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1250.50",
+                  "1,23,456.70",
+                  "₹ 1,200"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "warn_at_percent": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warn At Percent"
+          }
+        },
+        "title": "BudgetUpdate",
+        "type": "object"
+      },
       "CashWithdrawalIn": {
         "additionalProperties": false,
         "properties": {
@@ -409,6 +722,44 @@
           "category_id"
         ],
         "title": "CashWithdrawalSuggestion",
+        "type": "object"
+      },
+      "CategoriesOut": {
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "format": "date",
+            "title": "From",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CategorySpendOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "to": {
+            "format": "date",
+            "title": "To",
+            "type": "string"
+          },
+          "total_net_spending": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Total Net Spending",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "total_net_spending",
+          "items"
+        ],
+        "title": "CategoriesOut",
         "type": "object"
       },
       "CategoryCreate": {
@@ -491,6 +842,73 @@
           "created_at"
         ],
         "title": "CategoryOut",
+        "type": "object"
+      },
+      "CategorySpendOut": {
+        "additionalProperties": false,
+        "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "gross_spending": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Gross Spending",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "net_spending": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Net Spending",
+            "type": "string"
+          },
+          "refunds": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Refunds",
+            "type": "string"
+          },
+          "share_percent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Share of total net spending, 1 decimal",
+            "title": "Share Percent"
+          }
+        },
+        "required": [
+          "category_id",
+          "name",
+          "gross_spending",
+          "refunds",
+          "net_spending",
+          "share_percent"
+        ],
+        "title": "CategorySpendOut",
         "type": "object"
       },
       "CategoryUpdate": {
@@ -1365,6 +1783,81 @@
         "title": "OpeningBalanceIn",
         "type": "object"
       },
+      "ProjectionOut": {
+        "additionalProperties": false,
+        "properties": {
+          "days_elapsed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Elapsed"
+          },
+          "days_in_month": {
+            "title": "Days In Month",
+            "type": "integer"
+          },
+          "formula": {
+            "default": "spent / days_elapsed * days_in_month",
+            "title": "Formula",
+            "type": "string"
+          },
+          "may_exceed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "May Exceed"
+          },
+          "projected_spending": {
+            "anyOf": [
+              {
+                "examples": [
+                  "1250.50"
+                ],
+                "pattern": "^-?\\d+\\.\\d{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projected Spending"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "too_early_in_month",
+                  "not_current_month"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "projected_spending",
+          "may_exceed",
+          "reason",
+          "days_elapsed",
+          "days_in_month"
+        ],
+        "title": "ProjectionOut",
+        "type": "object"
+      },
       "ReadinessResponse": {
         "properties": {
           "database": {
@@ -1579,6 +2072,139 @@
           "already_imported"
         ],
         "title": "RowCounts",
+        "type": "object"
+      },
+      "SummaryOut": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "period": {
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "year"
+            ],
+            "title": "Period",
+            "type": "string"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/TotalsOut"
+          }
+        },
+        "required": [
+          "period",
+          "start",
+          "end",
+          "totals"
+        ],
+        "title": "SummaryOut",
+        "type": "object"
+      },
+      "TimeseriesOut": {
+        "additionalProperties": false,
+        "properties": {
+          "buckets": {
+            "items": {
+              "$ref": "#/components/schemas/BucketOut"
+            },
+            "title": "Buckets",
+            "type": "array"
+          },
+          "from": {
+            "format": "date",
+            "title": "From",
+            "type": "string"
+          },
+          "granularity": {
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "year"
+            ],
+            "title": "Granularity",
+            "type": "string"
+          },
+          "to": {
+            "format": "date",
+            "title": "To",
+            "type": "string"
+          }
+        },
+        "required": [
+          "granularity",
+          "from",
+          "to",
+          "buckets"
+        ],
+        "title": "TimeseriesOut",
+        "type": "object"
+      },
+      "TotalsOut": {
+        "additionalProperties": false,
+        "description": "Section 6.3: transfers are never included; excluded rows are left out.",
+        "properties": {
+          "gross_spending": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Gross Spending",
+            "type": "string"
+          },
+          "income": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Income",
+            "type": "string"
+          },
+          "net_cash_flow": {
+            "description": "income + refunds - gross_spending",
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Net Cash Flow",
+            "type": "string"
+          },
+          "net_spending": {
+            "description": "gross_spending - refunds; may be negative",
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Net Spending",
+            "type": "string"
+          },
+          "refunds": {
+            "examples": [
+              "1250.50"
+            ],
+            "pattern": "^-?\\d+\\.\\d{2}$",
+            "title": "Refunds",
+            "type": "string"
+          }
+        },
+        "required": [
+          "gross_spending",
+          "refunds",
+          "net_spending",
+          "income",
+          "net_cash_flow"
+        ],
+        "title": "TotalsOut",
         "type": "object"
       },
       "TransactionDetail": {
@@ -2658,6 +3284,310 @@
         ]
       }
     },
+    "/api/v1/budgets": {
+      "get": {
+        "operationId": "list_budgets_api_v1_budgets_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "month",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "examples": [
+                "2026-11"
+              ],
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Budgets",
+        "tags": [
+          "budgets"
+        ]
+      },
+      "post": {
+        "operationId": "create_budget_api_v1_budgets_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BudgetCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Budget",
+        "tags": [
+          "budgets"
+        ]
+      }
+    },
+    "/api/v1/budgets/status": {
+      "get": {
+        "description": "Spent so far, warning/over status and, for the current month, a month-end projection.",
+        "operationId": "budget_status_api_v1_budgets_status_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "month",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "examples": [
+                "2026-11"
+              ],
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetStatusList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Budget Status",
+        "tags": [
+          "budgets"
+        ]
+      }
+    },
+    "/api/v1/budgets/{budget_id}": {
+      "delete": {
+        "operationId": "delete_budget_api_v1_budgets__budget_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "budget_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Budget Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Budget",
+        "tags": [
+          "budgets"
+        ]
+      },
+      "get": {
+        "operationId": "read_budget_api_v1_budgets__budget_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "budget_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Budget Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Budget",
+        "tags": [
+          "budgets"
+        ]
+      },
+      "patch": {
+        "operationId": "update_budget_api_v1_budgets__budget_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "budget_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Budget Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BudgetUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Budget",
+        "tags": [
+          "budgets"
+        ]
+      }
+    },
     "/api/v1/categories": {
       "get": {
         "operationId": "list_categories_api_v1_categories_get",
@@ -3238,6 +4168,211 @@
         "summary": "Suggestions",
         "tags": [
           "refunds"
+        ]
+      }
+    },
+    "/api/v1/reports/categories": {
+      "get": {
+        "operationId": "categories_api_v1_reports_categories_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "From",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "To",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoriesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Categories",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/reports/summary": {
+      "get": {
+        "operationId": "summary_api_v1_reports_summary_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "default": "month",
+              "enum": [
+                "day",
+                "week",
+                "month",
+                "year"
+              ],
+              "title": "Period",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Defaults to today",
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Defaults to today",
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Summary",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/reports/timeseries": {
+      "get": {
+        "description": "One bucket per period; the first and last are clipped to the range. Empty periods\nare included with zero totals.",
+        "operationId": "timeseries_api_v1_reports_timeseries_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "granularity",
+            "required": true,
+            "schema": {
+              "enum": [
+                "day",
+                "week",
+                "month",
+                "year"
+              ],
+              "title": "Granularity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "From",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "To",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeseriesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Timeseries",
+        "tags": [
+          "reports"
         ]
       }
     },

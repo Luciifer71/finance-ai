@@ -160,3 +160,23 @@ def _create_job(client: TestClient, user: ApiUser) -> str:
 
 
 register(IsolatedResource(name="jobs", create=_create_job, detail="/api/v1/jobs/{id}"))
+
+
+def _create_budget(client: TestClient, user: ApiUser) -> str:
+    response = client.post(
+        "/api/v1/budgets", json={"month": "2026-11", "amount": "777.00"}, headers=user.headers
+    )
+    assert response.status_code == 201, response.text
+    return str(response.json()["id"])
+
+
+register(
+    IsolatedResource(
+        name="budgets",
+        create=_create_budget,
+        detail="/api/v1/budgets/{id}",
+        updates=[("PATCH", "/api/v1/budgets/{id}", {"amount": "1.00"})],
+        deletes=[("DELETE", "/api/v1/budgets/{id}")],
+        lists=["/api/v1/budgets", "/api/v1/budgets/status?month=2026-11"],
+    )
+)

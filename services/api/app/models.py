@@ -638,3 +638,47 @@ class TransactionEvent(Base):
         UniqueConstraint("seq", name="uq_transaction_events_seq"),
         Index("ix_transaction_events_tx_seq", "transaction_id", "seq"),
     )
+
+
+class Budget(Base):
+    """A spending limit for one month, for one category or (category NULL) all spending."""
+
+    __tablename__ = "budgets"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    category_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), nullable=True)
+    # The first day of the budget's month (the API speaks "YYYY-MM").
+    month: Mapped[date] = mapped_column(Date, nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Money, nullable=False)
+    warn_at_percent: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=80, server_default="80"
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("id", "user_id"),
+        ForeignKeyConstraint(
+            ["category_id", "user_id"],
+            ["categories.id", "categories.user_id"],
+            name="fk_budget_category_owner",
+        ),
+        # One budget per (user, category, month); "all spending" (NULL) counts as one value.
+        UniqueConstraint(
+            "user_id",
+            "category_id",
+            "month",
+            name="uq_budgets_user_category_month",
+            postgresql_nulls_not_distinct=True,
+        ),
+        CheckConstraint("amount > 0", name="positive_amount"),
+        CheckConstraint("warn_at_percent BETWEEN 1 AND 100", name="valid_warn_percent"),
+        CheckConstraint("EXTRACT(DAY FROM month) = 1", name="month_is_first_day"),
+    )

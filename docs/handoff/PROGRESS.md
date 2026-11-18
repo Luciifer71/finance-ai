@@ -7,7 +7,7 @@ MERGE_POLICY: auto-after-green-ci
 <!-- Change to "wait-for-human" if Krishay wants to review each PR before it merges. -->
 
 ## Status
-- Current milestone: M6 (M0-M5 done)
+- Current milestone: M7 (M0-M6 done)
 - Status: IN PROGRESS
 - Branch: `claude/hopeful-euler-ro7kla` (M0-M4 merged to main in PR #7; M5+ on the same branch)
 - Last updated: 2026-11-18
@@ -22,7 +22,7 @@ MERGE_POLICY: auto-after-green-ci
 | M3 | CSV import pipeline | done | #7 | docs/learning/M3-csv-import.md |
 | M4 | Ledger integrity | done | #7 | docs/learning/M4-ledger-integrity.md |
 | M5 | Jobs and categorization | done | (next PR) | docs/learning/M5-jobs-categorization.md |
-| M6 | Reports and budgets | todo | | |
+| M6 | Reports and budgets | done | (next PR) | docs/learning/M6-reports-budgets.md |
 | M7 | Week-2 gate: export, restore, isolation, end-to-end | todo | | |
 | M8 | Goals, wishlist, projections, purchase scenario | todo | | |
 | M9 | Forecast and insights | todo | | |
@@ -38,6 +38,17 @@ MERGE_POLICY: auto-after-green-ci
 (Date, decision, reason. Include every dependency added and every deviation from the handoff.)
 - 2026-11-18: From M5 on, commits carry a `Co-Authored-By: Claude` trailer (Krishay's request);
   author stays Krishay. Each milestone is pushed when done.
+- 2026-11-18 M6: Reports use SQL aggregation; a test checks SQL totals equal the pure Python
+  definitions (`domain/reports.py`) for every day/week/month/year bucket of the fixture.
+- 2026-11-18 M6: Timeseries returns every period in the range (empty ones as zeros); the first and
+  last buckets are clipped to `from`/`to`; at most 400 buckets (422 `report.too_many_buckets`).
+- 2026-11-18 M6: Category share percent is relative to total net spending, `null` when that total
+  is 0 or negative. Expenses with no category and those in "Uncategorized" are one bucket.
+- 2026-11-18 M6: Budget `spent` = the whole month's net spending (section 6.8 literally), so
+  future-dated manual rows in the current month count. Budgets for income categories are refused.
+  Budget month and category are fixed after creation (delete and recreate); budgets can be
+  deleted (plans, not ledger facts). Projection outside the current month: `not_current_month`.
+- 2026-11-18 M6: The isolation harness now treats every `*_id` field as an id (stricter leak check).
 - 2026-11-18 M5: A claim counts as an attempt (attempts + 1 when a job starts), so a worker crash
   also uses an attempt; after an exception the job is `failed` until `run_after`, then the next
   poll returns it to `queued` (the handoff's "failed -> back to queued").
@@ -156,6 +167,9 @@ MERGE_POLICY: auto-after-green-ci
 
 ## Evidence log
 (Commands run and their results that prove a milestone works, e.g. test counts, timings, backup dry run.)
+- 2026-11-18 M6: `dev.py check` all PASS; 371 tests (~35 s); coverage 97%. Feb 2028 fixture: month
+  net 4250.00, leap day net -700.50, ISO week 28 Feb-5 Mar net -250.50, year net 6400.00;
+  budget boundaries 799.99 ok / 800.00 warning / 1000.00 over; too_early before day 7.
 - 2026-11-18 M5: `dev.py check` all PASS; 349 tests (~31 s); coverage 97%. Failing handler -> dead
   after 5 attempts, import still completed, 12 transactions and balance 34125.00 readable; SKIP LOCKED
   test with 3 real sessions; GitHub CI green for PR #7 before merge.
