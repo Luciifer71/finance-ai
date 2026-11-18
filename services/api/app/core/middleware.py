@@ -27,10 +27,22 @@ _API_HEADERS = [
 
 
 def _path_template(scope: Scope) -> str:
-    """The route pattern (``/api/v1/accounts/{account_id}``), never the raw path with ids."""
+    """The route pattern (``/api/v1/accounts/{account_id}``), never the raw path with ids.
+
+    Newer FastAPI versions report an included route's own path without the router
+    prefixes ("/accounts"). Path parameters here are always one segment, so the
+    prefix is the raw path's leading segments that the template does not cover.
+    """
     route = scope.get("route")
     template = getattr(route, "path", None)
-    return template if isinstance(template, str) else "<unmatched>"
+    if not isinstance(template, str):
+        return "<unmatched>"
+    raw_segments = scope["path"].rstrip("/").split("/")
+    template_segments = template.rstrip("/").split("/")
+    extra = len(raw_segments) - len(template_segments)
+    if extra <= 0:
+        return template
+    return "/".join(raw_segments[: extra + 1]) + "/" + "/".join(template_segments[1:])
 
 
 class RequestContextMiddleware:

@@ -33,6 +33,9 @@ _SECRET_PAIR = re.compile(
     re.I,
 )
 
+# Our own identifiers (random hex/UUIDs, hashes) contain digit runs but no user data.
+_SAFE_KEYS = frozenset({"request_id", "user_hash", "user", "job_id"})
+
 # Attributes every LogRecord has; anything else was passed with ``extra=``.
 _STANDARD_ATTRS = set(vars(logging.makeLogRecord({}))) | {"message", "asctime"}
 
@@ -81,7 +84,7 @@ class RedactingFilter(logging.Filter):
         record.msg = redact_text(message)
         record.args = None
         for key, value in list(vars(record).items()):
-            if key not in _STANDARD_ATTRS:
+            if key not in _STANDARD_ATTRS and key not in _SAFE_KEYS:
                 setattr(record, key, redact_value(key, value))
         return True
 

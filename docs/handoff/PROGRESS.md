@@ -38,6 +38,12 @@ MERGE_POLICY: auto-after-green-ci
 (Date, decision, reason. Include every dependency added and every deviation from the handoff.)
 - 2026-11-18: From M5 on, commits carry a `Co-Authored-By: Claude` trailer (Krishay's request);
   author stays Krishay. Each milestone is pushed when done.
+- 2026-11-18 fix: found while Krishay tried /docs by hand. (1) Access log showed "/accounts"
+  instead of "/api/v1/accounts" (FastAPI 0.16x reports routes without router prefixes); the
+  middleware now rebuilds the full template. (2) Redaction mangled our own request ids (hex with 6+
+  digits); request_id/user/job_id are exempt. (3) OpenAPI documented FastAPI's `{"detail": [...]}`
+  422 shape; it now documents the real `application/problem+json` Problem/ValidationProblem and a
+  401 on every /api/v1 operation (`core/openapi.py`).
 - 2026-11-18 M6: Reports use SQL aggregation; a test checks SQL totals equal the pure Python
   definitions (`domain/reports.py`) for every day/week/month/year bucket of the fixture.
 - 2026-11-18 M6: Timeseries returns every period in the range (empty ones as zeros); the first and

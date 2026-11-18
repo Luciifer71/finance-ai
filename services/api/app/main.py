@@ -15,6 +15,7 @@ from app.core.config import Settings, get_settings
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import BodySizeLimitMiddleware, RequestContextMiddleware
+from app.core.openapi import install_openapi
 from app.core.security import TokenVerifier, build_token_verifier
 from app.database import create_db_engine, create_session_factory
 
@@ -45,6 +46,7 @@ def create_app(
     )
 
     install_error_handlers(app)
+    install_openapi(app)
     app.include_router(health_router)
     app.include_router(api_router, prefix="/api/v1")
 
