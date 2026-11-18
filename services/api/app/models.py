@@ -2,6 +2,7 @@
 
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -20,7 +21,9 @@ from sqlalchemy import (
     Uuid,
     false,
     func,
+    text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 NAMING_CONVENTION = {
@@ -182,6 +185,17 @@ class TransactionImport(Base):
     rows_skipped: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     rows_failed: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     error_message: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Which mapping profile parsed the file, and what the preview found.
+    # The file itself is never stored.
+    profile_id: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    file_size_bytes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    date_from: Mapped[date | None] = mapped_column(Date, nullable=True)
+    date_to: Mapped[date | None] = mapped_column(Date, nullable=True)
+    closing_balance: Mapped[Decimal | None] = mapped_column(Money, nullable=True)
+    closing_balance_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    warnings: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb")
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -202,7 +216,7 @@ class TransactionImport(Base):
         # The same file uploaded twice for the same account is one import.
         UniqueConstraint("account_id", "file_sha256", name="uq_import_account_file"),
         CheckConstraint(
-            "status IN ('pending', 'processing', 'completed', 'failed')",
+            "status IN ('pending', 'previewed', 'processing', 'completed', 'failed', 'cancelled')",
             name="valid_import_status",
         ),
         CheckConstraint(
@@ -267,6 +281,8 @@ class Transaction(Base):
         DateTime(timezone=True),
         nullable=True,
     )
+    # Which line of the import's file this row came from (imported rows only).
+    import_row_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Both sides of a transfer between the user's own accounts share this id.
     transfer_group_id: Mapped[UUID | None] = mapped_column(
         Uuid(as_uuid=True),
@@ -452,3 +468,119 @@ class CategorizationRule(Base):
         CheckConstraint("created_from IN ('seed', 'user')", name="valid_rule_origin"),
         CheckConstraint("pattern <> '' AND pattern = upper(pattern)", name="pattern_normalized"),
     )
+
+
+class ImportRow(Base):
+    """One parsed data row of an uploaded statement, shown in the preview.
+
+    Only parsed fields are kept, never the raw line. ``raw_hash`` lets support
+    tell whether two files had the same line without storing it.
+    """
+
+    __tablename__ = "import_rows"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    import_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False)
+    row_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    raw_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    posted_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    value_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    reference: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    amount: Mapped[Decimal | None] = mapped_column(Money, nullable=True)
+    direction: Mapped[str | None] = mapped_column(String(6), nullable=True)
+    closing_balance: Mapped[Decimal | None] = mapped_column(Money, nullable=True)
+    fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    error_code: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    error_message: Mapped[str | None] = mapped_column(String(300), nullable=True)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["import_id", "user_id"],
+            ["transaction_imports.id", "transaction_imports.user_id"],
+            name="fk_import_row_import_owner",
+            ondelete="CASCADE",
+        ),
+        UniqueConstraint("import_id", "row_number", name="uq_import_rows_import_row"),
+        CheckConstraint(
+            "status IN ('valid', 'invalid', 'duplicate_in_file', 'already_imported')",
+            name="valid_row_status",
+        ),
+        CheckConstraint(
+            "status = 'invalid' OR (posted_on IS NOT NULL AND amount > 0 "
+            "AND direction IN ('debit', 'credit') AND fingerprint IS NOT NULL)",
+            name="parsed_rows_complete",
+        ),
+    )
+
+
+class Job(Base):
+    """A unit of background work in the PostgreSQL outbox (handoff section 9).
+
+    Enqueued in the same database transaction as the change that needs it, so a
+    committed import always has its categorization job, and a rolled-back one never does.
+    """
+
+    __tablename__ = "jobs"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    kind: Mapped[str] = mapped_column(String(60), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    status: Mapped[str] = mapped_column(String(10), nullable=False, default="queued")
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    max_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=5)
+    run_after: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    locked_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    locked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_error: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    idempotency_key: Mapped[str] = mapped_column(String(200), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("idempotency_key", name="uq_jobs_idempotency_key"),
+        CheckConstraint(
+            "status IN ('queued', 'running', 'succeeded', 'failed', 'dead')",
+            name="valid_job_status",
+        ),
+        CheckConstraint("attempts >= 0 AND max_attempts >= 1", name="valid_attempts"),
+        # The worker's "next job to run" query.
+        Index("ix_jobs_status_run_after", "status", "run_after"),
+    )
+
+
+class AccessAudit(Base):
+    """Who imported or exported data, or failed to sign in repeatedly.
+
+    Never holds tokens, amounts, descriptions or file contents.
+    """
+
+    __tablename__ = "access_audit"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    action: Mapped[str] = mapped_column(String(40), nullable=False)
+    resource_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), nullable=True)
+    details: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (Index("ix_access_audit_user_created", "user_id", "created_at"),)

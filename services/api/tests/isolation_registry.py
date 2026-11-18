@@ -85,3 +85,31 @@ register(
         lists=["/api/v1/transactions", "/api/v1/transactions?include_excluded=true"],
     )
 )
+
+
+def _create_import(client: TestClient, user: ApiUser) -> str:
+    account_id = _create_account(client, user)
+    response = client.post(
+        "/api/v1/imports",
+        files={
+            "file": ("s.csv", b"date,description,amount\n2026-11-05,private,-9.99\n", "text/csv")
+        },
+        data={"account_id": account_id, "profile_id": "simple_v1"},
+        headers=user.headers,
+    )
+    assert response.status_code == 201, response.text
+    return str(response.json()["id"])
+
+
+register(
+    IsolatedResource(
+        name="imports",
+        create=_create_import,
+        detail="/api/v1/imports/{id}",
+        updates=[
+            ("POST", "/api/v1/imports/{id}/commit", {}),
+            ("POST", "/api/v1/imports/{id}/cancel", {}),
+        ],
+        lists=["/api/v1/imports"],
+    )
+)

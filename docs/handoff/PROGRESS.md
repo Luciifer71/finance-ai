@@ -7,7 +7,7 @@ MERGE_POLICY: auto-after-green-ci
 <!-- Change to "wait-for-human" if Krishay wants to review each PR before it merges. -->
 
 ## Status
-- Current milestone: M3 (M0-M2 done)
+- Current milestone: M4 (M0-M3 done)
 - Status: IN PROGRESS
 - Branch: `claude/hopeful-euler-ro7kla` (all milestones; see Decisions)
 - Last updated: 2026-11-18
@@ -19,7 +19,7 @@ MERGE_POLICY: auto-after-green-ci
 | M0 | Foundation and guardrails | done | branch (PR at end) | docs/learning/M0-foundation.md |
 | M1 | Authentication and user isolation | done | branch (PR at end) | docs/learning/M1-authentication.md |
 | M2 | Accounts, categories, balances, transaction reads | done | branch (PR at end) | docs/learning/M2-accounts-balances.md |
-| M3 | CSV import pipeline | todo | | |
+| M3 | CSV import pipeline | done | branch (PR at end) | docs/learning/M3-csv-import.md |
 | M4 | Ledger integrity | todo | | |
 | M5 | Jobs and categorization | todo | | |
 | M6 | Reports and budgets | todo | | |
@@ -36,6 +36,27 @@ MERGE_POLICY: auto-after-green-ci
 
 ## Decisions
 (Date, decision, reason. Include every dependency added and every deviation from the handoff.)
+- 2026-11-18 M3: A failed, cancelled or never-committed import of the same file (same account,
+  same hash) is **deleted and replaced** on re-upload (its staging rows cascade); only a completed
+  import gives 409 `import.already_imported`. A file rejected while parsing is recorded as a
+  `failed` import (hash, size, message only) so the history shows it.
+- 2026-11-18 M3: `duplicate_in_file` = an identical row (date, amount, direction, description) that
+  also repeats a non-empty, non-placeholder reference number. Identical rows without a reference
+  are all kept (occurrence numbers). References of all zeros are treated as "no reference".
+- 2026-11-18 M3: CSV references are not written to `transactions.external_id` (banks reuse
+  placeholder numbers, and a reversal can share its original's reference, which would hit
+  `uq_tx_external_reference`). The reference still feeds the fingerprint and the preview.
+- 2026-11-18 M3: Footer handling: rows starting "statement summary", "total", "***" or "end of
+  statement" end the data; "opening balance"/"closing balance" rows are skipped. CSV is parsed with
+  `strict=True` so an unterminated quote is an error instead of silently swallowing later rows.
+- 2026-11-18 M3: Closing balance = balance of the last row in date order (newest-first files are
+  detected). A second statement giving a different balance for a date that already has a statement
+  snapshot keeps the first and adds warning `import.closing_balance_conflict`.
+- 2026-11-18 M3: Accepted upload MIME types: text/csv, application/csv, text/plain,
+  application/vnd.ms-excel (Windows labels .csv this way), application/octet-stream, empty.
+- 2026-11-18 M3: The handoff's "cp1252 file with ₹" is impossible (₹ is not in cp1252); the fixture
+  uses é and an en dash in cp1252, and ₹ is tested in UTF-8 files.
+- 2026-11-18 M3: `jobs` and `access_audit` tables created now (handler in M5, rate limits in M11).
 - 2026-11-18 M2: Balance reason when the anchor is user-entered: `no_statement` if the account has
   no statement snapshot on or before the date, else `user_entered_anchor`. Reason precedence:
   no_anchor > (user anchor) > reconciliation_mismatch > transactions_after_statement. Verification
@@ -98,6 +119,9 @@ MERGE_POLICY: auto-after-green-ci
 
 ## Evidence log
 (Commands run and their results that prove a milestone works, e.g. test counts, timings, backup dry run.)
+- 2026-11-18 M3: `dev.py check` all PASS; 263 tests; coverage 97%. Acceptance: clean import -> 12
+  rows, balance 34125.00 verified; re-import -> 0; overlap -> +4, 91418.50 verified, reconciles;
+  property test (25 random statements) import twice == import once.
 - 2026-11-18 M2: `dev.py check` all PASS; 214 tests; coverage 97%. Isolation harness covers
   accounts (+balance, reconciliation, opening balance), categories, transactions.
 - 2026-11-18 M1: `dev.py check` all PASS; 163 tests; coverage 95%. Concurrency test: 4 threads
